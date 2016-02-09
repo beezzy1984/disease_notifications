@@ -15,26 +15,24 @@ NOTIFICATION_STATES = [
     ('confirmed', 'Confirmed'),
     ('discarded', 'Discarded (confirmed negative)')
 ]
-
-"""
-blood, 
-urine,
-sputum,
-csf, - cerebro-spinal fluid
-stool,
-throat swab,
-eye swab,
-nasopharyngeal swab,
-rectal swab,
-blood smear
-"""
+SPECIMEN_TYPES = [
+    ('blood', 'Blood'),
+    ('urine', 'Urine'),
+    ('sputum', 'Sputum'),
+    ('csf', 'Csf, - Cerebrospinal Fluid'),
+    ('stool', 'Stool'),
+    ('throat swab', 'Throat Swab'),
+    ('eye swab', 'Eye Swab'),
+    ('nasopharyngeal swab', 'Nasopharyngeal Swab'),
+    ('rectal swab', 'Rectal Swab'),
+    ('blood smear', 'Blood Smear')]
 
 
 class DiseaseNotification(ModelView, ModelSQL):
     'Disease Notification'
 
     __name__ = 'gnuhealth.disease_notification'
-
+    name = fields.Char('Code',)
     patient = fields.Many2One('gnuhealth.patient', 'Patient', required=True,
                               states=RO_SAVED)
     status = fields.Selection(NOTIFICATION_STATES, 'Status')
@@ -51,13 +49,10 @@ class DiseaseNotification(ModelView, ModelSQL):
     date_seen = fields.Date('Date Seen', states=RO_SAVED)
     encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter'),
     specimen_taken = fields.Boolean('Specimen Taken')
-    specimen_type = fields.Char('Type', states=REQD_IF_LAB)
-    specimen_date = fields.Date('Date Speciment Taken', states=REQD_IF_LAB)
-    specimen_lab = fields.Char('Lab sent to', states=REQD_IF_LAB)
-    test_result = fields.Char('Lab test result', states=ONLY_IF_LAB)
-    lab_request = fields.Many2One('gnuhealth.patient.lab.test',
-                                  'Lab Test Request', states=ONLY_IF_LAB)
-    hospital_admission = fields.Boolean('Admitted to hospital')
+    specimens = fields.One2Many('gnuhealth.disease_notification.specimen',
+                                'notification', 'Specimens',
+                                states=ONLY_IF_LAB)
+    hospitalized = fields.Boolean('Admitted to hospital')
     admission_date = fields.Date('Date admitted', states=ONLY_IF_ADMITTED)
     hospital = fields.Many2One('gnuhealth.institution', 'hospital',
                                states=ONLY_IF_ADMITTED)
@@ -68,7 +63,8 @@ class DiseaseNotification(ModelView, ModelSQL):
                                help="History of Overseas travel in the last"
                                " 4 - 6 weeks")
     hx_locations = fields.One2Many(
-        'gnuhealth.disease_notification.travel', 'notification', 'Destinations',
+        'gnuhealth.disease_notification.travel', 'notification',
+        'Places visited',
         states={'invisible': ~Eval('hx_travel', False),
                 'required': Eval('hx_travel', False)})
 
@@ -76,6 +72,21 @@ class DiseaseNotification(ModelView, ModelSQL):
     def __setup__(cls):
         super(DiseaseNotification, cls).__setup__()
         cls._order.insert(0, ('date_notified', 'DESC'))
+
+
+class NotifiedSpecimen(ModelSQL, ModelView):
+    'Specimen'
+
+    __name__ = 'gnuhealth.disease_notification.specimen'
+    notification = fields.Many2One('gnuhealth.disease_notification',
+                                   'Notification', required=True)
+    specimen_type = fields.Char('Type', required=True)
+    date_taken = fields.Date('Date Speciment Taken', required=True)
+    lab_sent_to = fields.Char('Lab sent to', required=True)
+    lab_result = fields.Char('Lab test result')
+    date_tested = fields.Date('Date tested')
+    lab_request = fields.Many2One('gnuhealth.patient.lab.test',
+                                  'Lab Test Request')
 
 
 class NotificationSymptom(ModelView, ModelSQL):

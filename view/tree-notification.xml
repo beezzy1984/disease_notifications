@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tree string="Disease Notifications">
+    <field name="name" />
+    <field name="patient_identifiers" />
+    <field name="diagnosis" />
+    <field name="date_notified" />
+    <field name="status" />
+    <field name="patient" tree_invisible="1" />
+    <field name="specimen_taken" />
+    <field name="hospitalized" />
+    <field name="hx_travel" />
+    <field name="deceased" />
+</tree>
