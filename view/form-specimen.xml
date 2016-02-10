@@ -1,1 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
+<form string="Specimen detail" col="4">
+    <label name="specimen_type" />
+    <field name="specimen_type" />
+    <label name="date_taken" />
+    <field name="date_taken" />
+    <newline />
+    <label name="lab_request" />
+    <field name="lab_request"  colspan="3" />
+    <newline />
+    <label name="lab_sent_to" />
+    <field name="lab_sent_to" colspan="3" />
+    <newline />
+    <group id="group_results" string="Lab Test Result" colspan="4" col="2">
+        <field name="lab_result" colspan="2"/>
+        <newline />
+        <label name="date_tested" />
+        <field name="date_tested" />
+    </group>
+    <newline />
+    <label name="notification" />
+    <field name="notification" colspan="3" />
+</form>

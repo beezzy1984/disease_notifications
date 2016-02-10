@@ -1,1 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
+<form string="Travel History" col="6">
+    <label name="notification" />
+    <field name="notification" colspan="5" />
+    <newline />
+
+    <label name="country" />
+    <field name="country" />
+    <label name="subdiv" />
+    <field name="subdiv" />
+    <label name="departure_date" />
+    <field name="departure_date" />
+</form>

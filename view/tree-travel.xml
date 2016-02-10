@@ -1,1 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
+<tree string="Travel History">
+    <field name="country" expand="1" />
+    <field name="subdiv" expand="1" />
+    <field name="departure_date" expand="1" />
+    <field name="notification" />
+</tree>

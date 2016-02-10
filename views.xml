@@ -1,5 +1,88 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tryton>
-	<data>
-	</data>
+    <data>
+        <!-- Notification Icon -->
+        <record model="ir.ui.icon" id="icon_health_notification">
+            <field name="name">health-notification</field>
+            <field name="path">icons/notification-message-im.svg</field>
+        </record>
+
+        <!-- Disease Notification Views -->
+        <record model="ir.ui.view" id="view_tree-notification">
+            <field name="model">gnuhealth.disease_notification</field>
+            <field name="type">tree</field>
+            <field name="name">tree-notification</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-notification">
+            <field name="model">gnuhealth.disease_notification</field>
+            <field name="type">form</field>
+            <field name="name">form-notification</field>
+        </record>
+        <record model="ir.action.act_window" id="actwin-notification">
+            <field name="name">Disease Notifications</field>
+            <field name="res_model">gnuhealth.disease_notification</field>
+        </record>
+        <record model="ir.action.act_window.view" id="actview_tree_notification">
+            <field name="view" ref="view_tree-notification" />
+            <field name="act_window" ref="actwin-notification" />
+            <field name="sequence" eval="10" />
+        </record>
+        <record model="ir.action.act_window.view" id="actview_form_notification">
+            <field name="view" ref="view_form-notification" />
+            <field name="act_window" ref="actwin-notification" />
+            <field name="sequence" eval="20" />
+        </record>
+        <menuitem action="actwin-notification"
+            id="menu-actwin-notification" icon="health-notification"
+            parent="health.gnuhealth_demographics_menu" sequence="5" />
+
+        <!-- Notification Specimens -->
+        <record model="ir.ui.view" id="view_tree-specimen">
+            <field name="model">gnuhealth.disease_notification.specimen</field>
+            <field name="type">tree</field>
+            <field name="name">tree-specimen</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-specimen">
+            <field name="model">gnuhealth.disease_notification.specimen</field>
+            <field name="type">form</field>
+            <field name="name">form-specimen</field>
+        </record>
+
+        <!-- Symptoms -->
+        <record model="ir.ui.view" id="view_tree-symptom">
+            <field name="model">gnuhealth.disease_notification.symptom</field>
+            <field name="type">tree</field>
+            <field name="name">tree-symptom</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-symptom">
+            <field name="model">gnuhealth.disease_notification.symptom</field>
+            <field name="type">form</field>
+            <field name="name">form-symptom</field>
+        </record>
+
+        <!-- Travel History -->
+        <record model="ir.ui.view" id="view_tree-travel">
+            <field name="model">gnuhealth.disease_notification.travel</field>
+            <field name="type">tree</field>
+            <field name="name">tree-travel</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-travel">
+            <field name="model">gnuhealth.disease_notification.travel</field>
+            <field name="type">form</field>
+            <field name="name">form-travel</field>
+        </record>
+<!--        
+        <record model="ir.action.act_window.view" id="">
+            <field name="view" ref="" />
+            <field name="act_window" ref="" />
+            <field name="sequence" eval="" />
+        </record>
+        <record model="" id="">
+            <field name=""></field>
+            <field name=""></field>
+            <field name=""></field>
+        </record>
+    -->
+
+    </data>
 </tryton>

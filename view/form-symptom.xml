@@ -1,1 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<form string="Symptom/Sign" col="4">
+    <label name="pathology" />
+    <field name="pathology" />
+    <label name="date_onset" />
+    <field name="date_onset" />
+    <newline />
+    <label name="comment" />
+    <field name="comment" colspan="3" />
+    <label name="name" />
+    <field name="name" />
+</form>
