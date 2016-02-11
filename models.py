@@ -69,6 +69,15 @@ class DiseaseNotification(ModelView, ModelSQL):
         'Places visited',
         states={'invisible': ~Eval('hx_travel', False),
                 'required': Eval('hx_travel', False)})
+    age = fields.Function(fields.Char('Age'), 'get_patient_field',
+                          searcher='search_patient_field')
+    sex_display = fields.Function(fields.Char('Sex'), 'get_patient_field',
+                                  searcher='search_patient_field')
+    puid = fields.Function(fields.Char('UPI'), 'get_patient_field',
+                           searcher='search_patient_field')
+    # medical_record_num = fields.Function(fields.Char('Medical Record Numbers'),
+    #                                      'get_patient_field',
+    #                                      searcher='search_patient_field')
 
     _order = [('date_notified', 'DESC')]
 

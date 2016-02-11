@@ -6,7 +6,7 @@
             <field name="patient" colspan="3" />
             <label string="UPI/MRN/Age/Sex/" id="lbl_patient_identifiers" />
             <field name="upi" />
-            <field name="mrn" />
+            <!-- <field name="mrn" /> -->
             <field name="age" />
             <field name="sex" />
         </group>
