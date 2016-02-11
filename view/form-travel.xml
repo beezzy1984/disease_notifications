@@ -10,4 +10,7 @@
     <field name="subdiv" />
     <label name="departure_date" />
     <field name="departure_date" />
+    <newline />
+    <label name="comment" />
+    <field name="comment" colspan="5" />
 </form>

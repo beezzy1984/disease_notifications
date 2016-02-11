@@ -3,5 +3,5 @@
     <field name="name" tree_invisible="1" />
     <field name="pathology" expand="1"/>
     <field name="date_onset" />
-    <field name="comments" expand="1"/>
+    <field name="comment" expand="1"/>
 </tree>

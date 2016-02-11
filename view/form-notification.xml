@@ -1,55 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form string="Disease Notification" col="6">
+<form string="Disease Notification" col="4">
 
-    <group id="group_header">
-        <group id="group_patient_header" string="Patient" col="8" colspan="4">
-            <field name="patient" colspan="3" />
-            <label string="UPI/MRN/Age/Sex/" id="lbl_patient_identifiers" />
-            <field name="upi" />
-            <!-- <field name="mrn" /> -->
-            <field name="age" />
-            <field name="sex" />
-        </group>
-        <group id="group_notification_header" string="Notification" colspan="2" col="4">
-            <field name="date_reported" />
-            <label name="status" />
-            <field name="status" />
-            <field name="name" />
-        </group>
+    <group id="group_patient_header" string="Patient" col="8" colspan="4">
+        <field name="patient" colspan="3" />
+        <label string="UPI/MRN/Age/Sex/" id="lbl_patient_identifiers" />
+        <field name="puid" />
+        <!-- <field name="mrn" /> -->
+        <field name="age" />
+        <field name="sex" />
     </group>
+    <group id="group_notification_header" string="Notification" colspan="4" col="8">
+        <label name="date_notified" />
+        <field name="date_notified" />
+        <label name="status" />
+        <field name="status" />
+        <label name="name" />
+        <field name="name" />
+    </group>
+
     <newline />
-    <group id="group_disease" col="6">
-        <label name="diagnosis" />
-        <field name="diagnosis" colspan="3" />
+    <group id="group_disease" string="Disease/Diagnosis" col="6" colspan="4">
+        <field name="diagnosis" colspan="4" />
         <label name="date_onset" />
         <field name="date_onset" />
         <newline />
-        <field name="symptoms" colspan="6" />
+        <field name="symptoms" colspan="6" height="140" />
     </group>
     <newline />
-    <group id="group_checks" colspan="6" col="12">
-        <label name="specimen_taken" />
-        <field name="specimen_taken" />
-        <label name="hx_travel" />
-        <field name="hx_travel" />
-        <label name="hospitalized" />
-        <field name="hospitalized" />
-        <label name="deceased" />
-        <field name="deceased" />
-    </group>
-    <group id="group_hospital_death">
-        <label name="hospital" />
-        <field name="hospital" />
-        <label name="admission_date" />
-        <field name="admission_date" />
-        <label name="ward" />
-        <field name="ward" />
-        <label name="date_of_death" />
-        <field name="date_of_death" />
-    </group>
-    <group id="group_one2manies">
-        <field name="specimens" colspan="6" />
-        <field name="hx_locations" colspan="6" />
+    <group id="group_details" string="Details" colspan="4" col="4">
+        <group id="group_checks" colspan="4" col="12">
+            <label name="hospitalized" />
+            <field name="hospitalized" />
+            <label name="deceased" />
+            <field name="deceased" />
+            <label name="specimen_taken" />
+            <field name="specimen_taken" />
+            <label name="hx_travel" />
+            <field name="hx_travel" />
+        </group>
+        <group id="group_hospital_death" colspan="4" col="8">
+            <label name="hospital" />
+            <field name="hospital" />
+            <label name="admission_date" />
+            <field name="admission_date" />
+            <label name="ward" />
+            <field name="ward" />
+            <label name="date_of_death" />
+            <field name="date_of_death" />
+        </group>
+        <group id="group_one2manies" colspan="4" col="1">
+            <field name="specimens" height="140" />
+            <field name="hx_locations" height="140" />
+        </group>
     </group>
 
 </form>

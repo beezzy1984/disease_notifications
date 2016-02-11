@@ -4,9 +4,9 @@
     <field name="specimen_type" />
     <label name="date_taken" />
     <field name="date_taken" />
-    <newline />
+<!--     <newline />
     <label name="lab_request" />
-    <field name="lab_request"  colspan="3" />
+    <field name="lab_request"  colspan="3" /> -->
     <newline />
     <label name="lab_sent_to" />
     <field name="lab_sent_to" colspan="3" />
@@ -18,6 +18,8 @@
         <field name="date_tested" />
     </group>
     <newline />
+    <label name="comment" />
+    <field name="comment" colspan="3" />
     <label name="notification" />
     <field name="notification" colspan="3" />
 </form>
