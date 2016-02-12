@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tryton>
+    <data>
+        <record id="seq_type_notification" model="ir.sequence.type">
+            <field name="name">Disease Notification</field>
+            <field name="code">gnuhealth.disease_notification</field>
+        </record>
+        <record id="seq_disease_notification" model="ir.sequence">
+            <field name="name">Disease Notification</field>
+            <field name="code">gnuhealth.disease_notification</field>
+            <field name="type">hexadecimal timestamp</field>
+            <field name="timestamp_rounding" eval="0.1" />
+            <field name="timestamp_offset" eval="1325412420.0" />
+            <field name="last_timestamp" eval="0" />
+            <!-- offset = time at 2012-01-01 00:00:00 EST -->
+        </record>
+
+        <record model="ir.property" id="property_notification_sequence">
+            <field name="field"
+                search="[('model.model', '=', 'gnuhealth.sequences'), ('name', '=', 'notification_sequence')]"/>
+            <field name="value" eval="'ir.sequence,' + str(ref('seq_disease_notification'))"/>
+        </record>
+    </data>
+</tryton>

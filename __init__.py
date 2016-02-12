@@ -1,9 +1,10 @@
 from trytond.pool import Pool
 from .models import (DiseaseNotification, TravelHistory, NotificationSymptom,
-                     NotifiedSpecimen)
+                     NotifiedSpecimen, GnuHealthSequences)
 
 def register():
     Pool.register(
+        GnuHealthSequences,
         DiseaseNotification,
         NotificationSymptom,
         NotifiedSpecimen,

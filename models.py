@@ -1,6 +1,8 @@
 
-from trytond.model import ModelView, ModelSQL, fields
+from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval
+from trytond.pool import Pool
+import re
 
 ONLY_IF_ADMITTED = {'invisible': ~Eval('hospitalized', False)}
 ONLY_IF_LAB = {'invisible': ~Eval('specimen_taken', False)}
@@ -32,14 +34,24 @@ SPECIMEN_TYPES = [
     ('blood smear', 'Blood Smear')]
 
 
+class GnuHealthSequences(ModelSingleton, ModelSQL, ModelView):
+    'Standard Sequences for GNU Health'
+    __name__ = 'gnuhealth.sequences'
+
+    notification_sequence = fields.Property(fields.Many2One(
+        'ir.sequence', 'Disease Notification Sequence', required=True,
+        domain=[('code', '=', 'gnuhealth.disease_notification')]))
+
+
 class DiseaseNotification(ModelView, ModelSQL):
     'Disease Notification'
 
     __name__ = 'gnuhealth.disease_notification'
     patient = fields.Many2One('gnuhealth.patient', 'Patient', required=True,
                               states=RO_SAVED)
-    status = fields.Selection(NOTIFICATION_STATES, 'Status', required=True)
-    name = fields.Char('Code', size=12, states=RO_SAVED)
+    status = fields.Selection(NOTIFICATION_STATES, 'Status', required=True,
+                              sort=False)
+    name = fields.Char('Code', size=18, states={'readonly': True})
     date_notified = fields.DateTime('Date reported', required=True,
                                     states=RO_SAVED)
     diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
@@ -84,6 +96,25 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
+
+    @fields.depends('diagnosis')
+    def on_change_with_name(self):
+        return '%s:' % self.diagnosis.code
+
+    @classmethod
+    def create(cls, vlist):
+        pool = Pool()
+        Sequence = pool.get('ir.sequence')
+        Config = pool.get('gnuhealth.sequences')
+        config = Config(1)
+        vlist = [x.copy() for x in vlist]
+        for values in vlist:
+            if values.get('name', '').endswith(':'):
+                newcode = Sequence.get_id(config.notification_sequence.id)
+                print 'Assigning code: %s%s' % (values['name'], newcode)
+                values['name'] = '%s%s' % (values['name'], newcode)
+
+        return super(DiseaseNotification, cls).create(vlist)
 
 
 class NotifiedSpecimen(ModelSQL, ModelView):
