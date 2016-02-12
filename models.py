@@ -111,7 +111,6 @@ class DiseaseNotification(ModelView, ModelSQL):
         for values in vlist:
             if values.get('name', '').endswith(':'):
                 newcode = Sequence.get_id(config.notification_sequence.id)
-                print 'Assigning code: %s%s' % (values['name'], newcode)
                 values['name'] = '%s%s' % (values['name'], newcode)
 
         return super(DiseaseNotification, cls).create(vlist)
