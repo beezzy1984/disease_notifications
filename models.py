@@ -85,6 +85,8 @@ class DiseaseNotification(ModelView, ModelSQL):
     ward = fields.Char('Ward', states=ONLY_IF_ADMITTED)
     deceased = fields.Boolean('Deceased')
     date_of_death = fields.Date('Date of Death', states=ONLY_IF_DEAD)
+    healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Reported by')
+    comments = fields.Text('Additional comments')
     hx_travel = fields.Boolean('Overseas Travel',
                                help="History of Overseas travel in the last"
                                " 4 - 6 weeks")
@@ -98,8 +100,6 @@ class DiseaseNotification(ModelView, ModelSQL):
                           searcher='search_patient_field')
     puid = fields.Function(fields.Char('UPI', size=12), 'get_patient_field',
                            searcher='search_patient_field')
-    healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Reported by')
-    comments = fields.Text('Additional comments')
     state_changes = fields.One2Many(
         'gnuhealth.disease_notification.statechange', 'notification',
         'State Changes')
@@ -183,7 +183,7 @@ class DiseaseNotification(ModelView, ModelSQL):
 
     @classmethod
     def epi_week(cls, instances, name):
-        epidisp = lambda d: '%d/%d' % get_epi_week(d)[2:]
+        epidisp = lambda d: '%d/%02d' % get_epi_week(d)[2:]
         if name == 'epi_week_onset':
             return dict([(k.id, epidisp(k.date_onset)) for k in instances])
 
