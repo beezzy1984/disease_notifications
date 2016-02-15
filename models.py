@@ -2,6 +2,7 @@
 from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
+from trytond.modules.health_jamaica.tryton_utils import get_epi_week
 import re
 
 ONLY_IF_ADMITTED = {'invisible': ~Eval('hospitalized', False)}
@@ -62,6 +63,9 @@ class DiseaseNotification(ModelView, ModelSQL):
                                'name', 'Symptoms', states=RO_STATE_END)
     date_onset = fields.Date('Date of Onset',
                              help='Date of onset of the illness')
+    epi_week_onset = fields.Function(fields.Char('Epi. Week of onset', size=8,
+                                     help='Week of onset (epidemiological)'),
+                                    'epi_week', searcher='search_epi_week')
     date_seen = fields.Date('Date Seen', states=RO_SAVED)
     encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter',
                                 states={
@@ -169,6 +173,16 @@ class DiseaseNotification(ModelView, ModelSQL):
                                                            *args)
         NotificationStateChange.create(to_make)
         return return_val
+
+    @classmethod
+    def epi_week(cls, instances, name):
+        epidisp = lambda d: '%d/%d' % get_epi_week(d)[2:]
+        if name == 'epi_week_onset':
+            return dict([(k.id, epidisp(k.date_onset)) for k in instances])
+
+    @classmethod
+    def search_epi_week(cls, field_name, clause):
+        pass
 
 
 class NotifiedSpecimen(ModelSQL, ModelView):

@@ -20,9 +20,11 @@
 
     <newline />
     <group id="group_disease" string="Disease/Diagnosis" col="6" colspan="4">
-        <field name="diagnosis" colspan="4" />
+        <field name="diagnosis" colspan="2" />
         <label name="date_onset" />
         <field name="date_onset" />
+        <label name="epi_week_onset" />
+        <field name="epi_week_onset" />
         <newline />
         <field name="symptoms" colspan="6" height="140" />
     </group>
