@@ -14,7 +14,6 @@ REQD_IF_LAB = dict([('required', Eval('specimen_taken', False))] +
                    ONLY_IF_LAB.items())
 RO_SAVED = {'readonly': Eval('id', 0) > 0}  # readonly after saved
 RO_NEW = {'readonly': Eval('id', 0) < 0}  # readonly when new
-RO_STATE_END = {'readonly': In(Eval('status', ''), ['confirmed', 'discarded'])}
 
 SEX_OPTIONS = [('m', 'Male'), ('f', 'Female'), ('u', 'Unknown')]
 NOTIFICATION_STATES = [
@@ -22,8 +21,11 @@ NOTIFICATION_STATES = [
     ('suspected', 'Suspected'),
     ('pending', 'Pending'),
     ('confirmed', 'Confirmed'),
-    ('discarded', 'Discarded (confirmed negative)')
+    ('discarded', 'Discarded (confirmed negative)'),
+    ('delete', 'Duplicate, Discard')
 ]
+NOTIFICATION_END_STATES = ['discarded', 'delete', 'confirmed']
+RO_STATE_END = {'readonly': In(Eval('status', ''), NOTIFICATION_END_STATES)}
 SPECIMEN_TYPES = [
     ('blood', 'Blood'),
     ('urine', 'Urine'),
@@ -50,6 +52,7 @@ class DiseaseNotification(ModelView, ModelSQL):
     'Disease Notification'
 
     __name__ = 'gnuhealth.disease_notification'
+    active = fields.Boolean('Active')
     patient = fields.Many2One('gnuhealth.patient', 'Patient', required=True,
                               states=RO_SAVED)
     status = fields.Selection(NOTIFICATION_STATES, 'Status', required=True,
@@ -129,6 +132,10 @@ class DiseaseNotification(ModelView, ModelSQL):
     @staticmethod
     def default_status():
         return 'suspected'
+
+    @staticmethod
+    def default_active():
+        return True
 
     @classmethod
     def create(cls, vlist):
