@@ -53,5 +53,15 @@
             <field name="hx_locations" height="140" />
         </group>
     </group>
+    <group id="group_tail_comment" string="Additional Comments" colspan="4" col="6">
+        <field colspan="6" name="comments" />
+        <newline />
+        <label name="encounter" />
+        <field name="encounter" />
+        <label name="date_seen" />
+        <field name="date_seen" />
+        <label name="healthprof" />
+        <field name="healthprof" />
+    </group>
 
 </form>

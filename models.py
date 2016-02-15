@@ -1,6 +1,6 @@
 
 from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
-from trytond.pyson import Eval
+from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
 import re
 
@@ -13,11 +13,13 @@ REQD_IF_LAB = dict([('required', Eval('specimen_taken', False))] +
                    ONLY_IF_LAB.items())
 RO_SAVED = {'readonly': Eval('id', 0) > 0}  # readonly after saved
 RO_NEW = {'readonly': Eval('id', 0) < 0}  # readonly when new
+RO_STATE_END = {'readonly': In(Eval('status', ''), ['confirmed', 'discarded'])}
 
 SEX_OPTIONS = [('m', 'Male'), ('f', 'Female'), ('u', 'Unknown')]
 NOTIFICATION_STATES = [
     (None, ''),
     ('suspected', 'Suspected'),
+    ('pending', 'Pending'),
     ('confirmed', 'Confirmed'),
     ('discarded', 'Discarded (confirmed negative)')
 ]
@@ -55,21 +57,23 @@ class DiseaseNotification(ModelView, ModelSQL):
     date_notified = fields.DateTime('Date reported', required=True,
                                     states=RO_SAVED)
     diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
-                                states=RO_SAVED, required=True)
+                                states=RO_STATE_END, required=False)
     symptoms = fields.One2Many('gnuhealth.disease_notification.symptom',
-                               'name', 'Symptoms')
-    date_onset = fields.Date('Date of Onset', required=True,
-                             help='Date of onset of the illness',
-                             states=RO_SAVED)
+                               'name', 'Symptoms', states=RO_STATE_END)
+    date_onset = fields.Date('Date of Onset',
+                             help='Date of onset of the illness')
     date_seen = fields.Date('Date Seen', states=RO_SAVED)
-    encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter'),
+    encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter',
+                                states={
+                                    'readonly': And(Bool(Eval('id', 0)),
+                                                    Bool(Eval('encounter')))})
     specimen_taken = fields.Boolean('Specimen Taken')
     specimens = fields.One2Many('gnuhealth.disease_notification.specimen',
                                 'notification', 'Specimens',
                                 states=ONLY_IF_LAB)
     hospitalized = fields.Boolean('Admitted to hospital')
     admission_date = fields.Date('Date admitted', states=ONLY_IF_ADMITTED)
-    hospital = fields.Many2One('gnuhealth.institution', 'hospital',
+    hospital = fields.Many2One('gnuhealth.institution', 'Hospital',
                                states=ONLY_IF_ADMITTED)
     ward = fields.Char('Ward', states=ONLY_IF_ADMITTED)
     deceased = fields.Boolean('Deceased')
@@ -87,6 +91,11 @@ class DiseaseNotification(ModelView, ModelSQL):
                           searcher='search_patient_field')
     puid = fields.Function(fields.Char('UPI', size=12), 'get_patient_field',
                            searcher='search_patient_field')
+    healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Reported by')
+    comments = fields.Text('Additional comments')
+    state_changes = fields.One2Many(
+        'gnuhealth.disease_notification.statechange', 'notification',
+        'State Changes')
     # medical_record_num = fields.Function(fields.Char('Medical Record Numbers'),
     #                                      'get_patient_field',
     #                                      searcher='search_patient_field')
@@ -97,9 +106,25 @@ class DiseaseNotification(ModelView, ModelSQL):
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
 
-    @fields.depends('diagnosis')
+    @fields.depends('diagnosis', 'name')
     def on_change_with_name(self):
-        return '%s:' % self.diagnosis.code
+        curname = self.name
+        if self.diagnosis:
+            newcode = '%s:' % self.diagnosis.code
+            if curname:
+                newcode = '%s:%s' % (self.diagnosis.code, curname)
+            return newcode
+        elif curname and ':' in curname:
+            return curname[curname.index(':')+1:]
+
+    @staticmethod
+    def default_healthprof():
+        healthprof_model = Pool().get('gnuhealth.healthprofessional')
+        return healthprof_model.get_health_professional()
+
+    @staticmethod
+    def default_status():
+        return 'suspected'
 
     @classmethod
     def create(cls, vlist):
@@ -109,11 +134,41 @@ class DiseaseNotification(ModelView, ModelSQL):
         config = Config(1)
         vlist = [x.copy() for x in vlist]
         for values in vlist:
-            if values.get('name', '').endswith(':'):
+            val_name = values.get('name', '')
+            if not val_name or val_name.endswith(':'):
                 newcode = Sequence.get_id(config.notification_sequence.id)
                 values['name'] = '%s%s' % (values['name'], newcode)
-
+            if values.get('state_changes', False):
+                pass
+            else:
+                values['state_changes'] = [
+                    ('create', [{
+                        'orig_state': None,
+                        'target_state': values['status'],
+                        'healthprof': values['healthprof']
+                     }])
+                ]
         return super(DiseaseNotification, cls).create(vlist)
+
+    @classmethod
+    def write(cls, records, values, *args):
+        '''create a NotificationStateChange when the status changes'''
+        healthprof = DiseaseNotification.default_healthprof()
+        irecs = iter((records, values) + args)
+        for recs, vals in zip(irecs, irecs):
+            newstate = vals.get('status', False)
+            to_make = []
+            if newstate:
+                for rec in recs:
+                    if rec.status != newstate:
+                        to_make.append({'notification': rec.id,
+                                        'orig_state': rec.status,
+                                        'target_state': newstate,
+                                        'healthprof': healthprof})
+        return_val = super(DiseaseNotification, cls).write(records, values,
+                                                           *args)
+        NotificationStateChange.create(to_make)
+        return return_val
 
 
 class NotifiedSpecimen(ModelSQL, ModelView):
@@ -130,7 +185,9 @@ class NotifiedSpecimen(ModelSQL, ModelView):
     lab_result = fields.Text('Lab test result', states=RO_NEW)
     date_tested = fields.Date('Date tested', states=RO_NEW)
     comment = fields.Char('Comment')
-    has_result = fields.Function(fields.Boolean('Results in'), 'get_has_result',
+    has_result = fields.Function(fields.Boolean('Results in',
+                                 help="Lab results have been entered"),
+                                 'get_has_result',
                                  searcher='search_has_result')
     # lab_request = fields.Many2One('gnuhealth.patient.lab.test',
     #                               'Lab Test Request')
@@ -142,8 +199,7 @@ class NotifiedSpecimen(ModelSQL, ModelView):
 
     @classmethod
     def search_has_result(cls, field_name, clause):
-
-        return [(And(Bool(Eval('date_tested')), Bool(Eval('lab_result'))), 
+        return [(And(Bool(Eval('date_tested')), Bool(Eval('lab_result'))),
                  clause[1], clause[2])]
 
 
@@ -179,3 +235,33 @@ class TravelHistory(ModelView, ModelSQL):
 
     _order = [('notification', 'DESC'), ('departure_date', 'DESC'),
               ('country', 'ASC')]
+
+
+class NotificationStateChange(ModelSQL, ModelView):
+    """Notification State Change"""
+    __name__ = 'gnuhealth.disease_notification.statechange'
+    notification = fields.Many2One('gnuhealth.disease_notification',
+                                   'Notification')
+    orig_state = fields.Selection(NOTIFICATION_STATES, 'Changed From')
+    target_state = fields.Selection(NOTIFICATION_STATES, 'Changed to',
+                                    required=True)
+    # use the built-in create_date and create_uid to determine who
+    # changed the state of the notification and when it was changed.
+    # Records in this model will, be created automatically
+    healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Changed by')
+    change_date = fields.Function(fields.DateTime('Changed on'),
+                                  'get_change_date')
+    creator = fields.Function(fields.Char('Changed by'), 'get_creator_name')
+
+    def get_creator_name(self, name):
+        pool = Pool()
+        Party = pool.get('party.party')
+        persons = Party.search([('internal_user', '=', self.create_uid)])
+        if persons:
+            return persons[0].name
+        else:
+            return self.create_uid.name
+
+    def get_change_date(self, name):
+        # we're sending back the create date since these are readonly
+        return self.create_date
