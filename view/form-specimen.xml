@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form string="Specimen detail" col="4">
+<form string="Sample detail" col="4">
     <label name="specimen_type" />
     <field name="specimen_type" />
     <label name="date_taken" />

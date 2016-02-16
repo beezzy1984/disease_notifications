@@ -75,9 +75,9 @@ class DiseaseNotification(ModelView, ModelSQL):
                                 states={
                                     'readonly': And(Bool(Eval('id', 0)),
                                                     Bool(Eval('encounter')))})
-    specimen_taken = fields.Boolean('Specimen Taken')
+    specimen_taken = fields.Boolean('Samples Taken')
     specimens = fields.One2Many('gnuhealth.disease_notification.specimen',
-                                'notification', 'Specimens',
+                                'notification', 'Samples',
                                 states=ONLY_IF_LAB)
     hospitalized = fields.Boolean('Admitted to hospital')
     admission_date = fields.Date('Date admitted', states=ONLY_IF_ADMITTED)
@@ -229,14 +229,14 @@ class RiskFactorCondition(ModelSQL, ModelView):
 
 
 class NotifiedSpecimen(ModelSQL, ModelView):
-    'Specimen'
+    'Sample'
 
     __name__ = 'gnuhealth.disease_notification.specimen'
     notification = fields.Many2One('gnuhealth.disease_notification',
                                    'Notification', required=True)
     specimen_type = fields.Selection(SPECIMEN_TYPES, 'Type', required=True,
                                      states=RO_SAVED)
-    date_taken = fields.Date('Date Speciment Taken', required=True,
+    date_taken = fields.Date('Date Sample Taken', required=True,
                              states=RO_SAVED)
     lab_sent_to = fields.Char('Lab sent to', required=True, states=RO_SAVED)
     lab_result = fields.Text('Lab test result', states=RO_NEW)

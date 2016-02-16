@@ -60,7 +60,7 @@
         <page id="page_risk_factors" string="Risk Factors">
             <field name="risk_factors" />
         </page>
-        <page id="page_specimen_lab" string="Specimens"
+        <page id="page_specimen_lab" string="Samples"
             states="{'invisible': Not(Eval('specimen_taken', False))}">
             <field name="specimens" height="140" />
         </page>
