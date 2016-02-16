@@ -22,6 +22,7 @@ NOTIFICATION_STATES = [
     ('suspected', 'Suspected'),
     ('pending', 'Pending'),
     ('confirmed', 'Confirmed'),
+    ('unclassified', 'Unclassified'),
     ('discarded', 'Discarded (confirmed negative)'),
     ('delete', 'Duplicate, Discard')
 ]
