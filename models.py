@@ -2,7 +2,10 @@
 from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
-from trytond.modules.health_jamaica.tryton_utils import get_epi_week
+from trytond.modules.health_jamaica.tryton_utils import (
+    get_epi_week, replace_clause_column
+)
+
 import re
 from datetime import datetime, date
 
@@ -70,7 +73,7 @@ class DiseaseNotification(ModelView, ModelSQL):
                              help='Date of onset of the illness')
     epi_week_onset = fields.Function(fields.Char('Epi. Week of onset', size=8,
                                      help='Week of onset (epidemiological)'),
-                                    'epi_week', searcher='search_epi_week')
+                                     'epi_week', searcher='search_epi_week')
     date_seen = fields.Date('Date Seen', states=RO_SAVED)
     encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter',
                                 states={
