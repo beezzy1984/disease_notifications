@@ -4,6 +4,7 @@ from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
 from trytond.modules.health_jamaica.tryton_utils import get_epi_week
 import re
+from datetime import datetime, date
 
 ONLY_IF_ADMITTED = {'invisible': ~Eval('hospitalized', False)}
 ONLY_IF_LAB = {'invisible': ~Eval('specimen_taken', False)}
@@ -87,6 +88,9 @@ class DiseaseNotification(ModelView, ModelSQL):
     date_of_death = fields.Date('Date of Death', states=ONLY_IF_DEAD)
     healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Reported by')
     comments = fields.Text('Additional comments')
+    risk_factors = fields.One2Many(
+        'gnuhealth.disease_notification.risk_disease', 'notification',
+        'Risk Factors', help="Other conditions of merit")
     hx_travel = fields.Boolean('Overseas Travel',
                                help="History of Overseas travel in the last"
                                " 4 - 6 weeks")
@@ -112,6 +116,10 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
+
+    @classmethod
+    def get_rec_name(cls, records, name):
+        return dict([(x.id, x.name) for x in records])
 
     @fields.depends('diagnosis', 'name')
     def on_change_with_name(self):
@@ -182,6 +190,19 @@ class DiseaseNotification(ModelView, ModelSQL):
         return return_val
 
     @classmethod
+    def validate(cls, records):
+        now = {date: date.today(), datetime: datetime.now(), type(None): None}
+        date_fields = ['date_onset', 'date_seen', 'date_notified',
+                       'admission_date', 'date_of_death']
+        for rec in records:
+            for fld in date_fields:
+                val = getattr(rec, fld)
+                if val and val > now[type(val)]:
+                    val_name = getattr(cls, fld).string
+                    cls.raise_user_error('%s cannot be in the future',
+                                         (val_name, ))
+
+    @classmethod
     def epi_week(cls, instances, name):
         epidisp = lambda d: '%d/%02d' % get_epi_week(d)[2:]
         if name == 'epi_week_onset':
@@ -190,6 +211,21 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def search_epi_week(cls, field_name, clause):
         pass
+
+
+class RiskFactorCondition(ModelSQL, ModelView):
+    'Risk Factor Conditions'
+
+    __name__ = 'gnuhealth.disease_notification.risk_disease'
+    notification = fields.Many2One('gnuhealth.disease_notification',
+                                   'Notification', required=True)
+    pathology = fields.Many2One('gnuhealth.pathology', 'Condition',
+                                required=True, states=RO_SAVED)
+    comment = fields.Char('Comment', size=200)
+
+    @classmethod
+    def get_rec_name(cls, records, name):
+        return dict([(x.id, x.pathology.rec_name) for x in records])
 
 
 class NotifiedSpecimen(ModelSQL, ModelView):
@@ -236,6 +272,10 @@ class NotificationSymptom(ModelView, ModelSQL):
     date_onset = fields.Date('Date of onset')
     comment = fields.Char('Comment')
 
+    @classmethod
+    def get_rec_name(cls, records, name):
+        return dict([(x.id, x.pathology.rec_name) for x in records])
+
 
 class TravelHistory(ModelView, ModelSQL):
     'Travel History'
@@ -256,6 +296,11 @@ class TravelHistory(ModelView, ModelSQL):
 
     _order = [('notification', 'DESC'), ('departure_date', 'DESC'),
               ('country', 'ASC')]
+
+    @classmethod
+    def get_rec_name(cls, records, name):
+        return dict([(x.id, '%s, %s' % (x.subdiv.name, x.country.name))
+                    for x in records])
 
 
 class NotificationStateChange(ModelSQL, ModelView):

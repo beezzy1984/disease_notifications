@@ -60,6 +60,18 @@
             <field name="name">form-symptom</field>
         </record>
 
+        <!-- Risk Factor Conditions -->
+        <record model="ir.ui.view" id="view_tree-risk_factor">
+            <field name="model">gnuhealth.disease_notification.risk_disease</field>
+            <field name="type">tree</field>
+            <field name="name">tree-risk_factor</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-risk_factor">
+            <field name="model">gnuhealth.disease_notification.risk_disease</field>
+            <field name="type">form</field>
+            <field name="name">form-risk_factor</field>
+        </record>
+
         <!-- Travel History -->
         <record model="ir.ui.view" id="view_tree-travel">
             <field name="model">gnuhealth.disease_notification.travel</field>
@@ -70,6 +82,13 @@
             <field name="model">gnuhealth.disease_notification.travel</field>
             <field name="type">form</field>
             <field name="name">form-travel</field>
+        </record>
+
+        <!-- Notification State Changes -->
+        <record model="ir.ui.view" id="view_tree-notifi_statechange">
+            <field name="model">gnuhealth.disease_notification.statechange</field>
+            <field name="type">tree</field>
+            <field name="name">tree-notifi_statechange</field>
         </record>
 <!--        
         <record model="ir.action.act_window.view" id="">

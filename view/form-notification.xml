@@ -35,11 +35,6 @@
                 <group id="group_tail_comment" colspan="3" col="6">
                     <separator name="comments" id="sep_comments" colspan="6" />
                     <field colspan="6" name="comments" />
-                    <newline />
-                    <separator name="encounter" colspan="6" />
-                    <field name="encounter" colspan="4" />
-                    <label name="date_seen" />
-                    <field name="date_seen" />
                 </group>
                 <group id="group_checks" colspan="1" col="2">
                     <label name="hospitalized" />
@@ -54,9 +49,16 @@
             </group>
             <newline />
             <group id="group_encounter" colspan="4" col="8">
+                <separator name="encounter" colspan="6" />
+                <field name="encounter" colspan="4" />
+                <label name="date_seen" />
+                <field name="date_seen" />
                 <label name="date_of_death" />
                 <field name="date_of_death" />
             </group>
+        </page>
+        <page id="page_risk_factors" string="Risk Factors">
+            <field name="risk_factors" />
         </page>
         <page id="page_specimen_lab" string="Specimens"
             states="{'invisible': Not(Eval('specimen_taken', False))}">
@@ -78,8 +80,11 @@
             <field name="hx_locations" height="140" />
         </page>
         <page id="page_notification" string="Notification">
-            <label name="healthprof" />
-            <field name="healthprof" />
+            <group id="group_notifi_extra" colspan="1" col="2">
+                <label name="healthprof" />
+                <field name="healthprof" />
+            </group>
+            <field name="state_changes" colspan="3" />
         </page>
     </notebook>
 </form>

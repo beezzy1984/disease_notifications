@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tree string="Risk Factors/Conditions">
+    <field name="notification" tree_invisible="1" />
+    <field name="pathology" expand="1"/>
+    <field name="comment" expand="1"/>
+</tree>

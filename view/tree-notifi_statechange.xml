@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tree string="State Changes">
+    <field name="target_state" />
+    <field name="change_date" widget="date" expand="1" />
+    <field name="healthprof" expand="1" />
+</tree>

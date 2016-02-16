@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form string="Risk Factor/Additional Condition" col="4">
+    <label name="pathology" />
+    <field name="pathology" colspan="2" />
+    <newline />
+    <label name="comment" />
+    <field name="comment" colspan="3" />
+    <label name="notification" />
+    <field name="notification" />
+</form>
