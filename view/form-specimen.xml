@@ -9,7 +9,9 @@
     <field name="lab_request"  colspan="3" /> -->
     <newline />
     <label name="lab_sent_to" />
-    <field name="lab_sent_to" colspan="3" />
+    <field name="lab_sent_to" />
+    <label name="name" />
+    <field name="name" />
     <newline />
     <group id="group_results" string="Lab Test Result" colspan="4" col="2">
         <field name="lab_result" colspan="2"/>

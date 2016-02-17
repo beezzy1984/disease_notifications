@@ -3,6 +3,7 @@
     <field name="specimen_type" />
     <field name="date_taken" />
     <field name="lab_sent_to" />
+    <field name="name" />
     <field name="has_result" />
     <field name="comment" expand="1"/>
     <field name="notification" />

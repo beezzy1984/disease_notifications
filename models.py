@@ -22,14 +22,18 @@ RO_NEW = {'readonly': Eval('id', 0) < 0}  # readonly when new
 SEX_OPTIONS = [('m', 'Male'), ('f', 'Female'), ('u', 'Unknown')]
 NOTIFICATION_STATES = [
     (None, ''),
+    ('waiting', 'Awaiting Classification'),
     ('suspected', 'Suspected'),
-    ('pending', 'Pending'),
     ('confirmed', 'Confirmed'),
-    ('unclassified', 'Unclassified'),
+    ('epiconfirm', 'Confirmed (epidemiologically linked)'),
     ('discarded', 'Discarded (confirmed negative)'),
+    ('notsuspected', 'Not Suspected'),
+    ('unclassified', 'Unclassified'),
+    ('cannotclassify', 'Cannot Classify'),
     ('delete', 'Duplicate, Discard')
 ]
-NOTIFICATION_END_STATES = ['discarded', 'delete', 'confirmed']
+NOTIFICATION_END_STATES = ['discarded', 'delete', 'confirmed', 'epiconfirm',
+                           'notsuspected', 'discarded']
 RO_STATE_END = {'readonly': In(Eval('status', ''), NOTIFICATION_END_STATES)}
 SPECIMEN_TYPES = [
     ('blood', 'Blood'),
@@ -62,7 +66,8 @@ class DiseaseNotification(ModelView, ModelSQL):
                               states=RO_SAVED)
     status = fields.Selection(NOTIFICATION_STATES, 'Status', required=True,
                               sort=False)
-    name = fields.Char('Code', size=18, states={'readonly': True})
+    name = fields.Char('Code', size=18, states={'readonly': True},
+                       required=True)
     date_notified = fields.DateTime('Date reported', required=True,
                                     states=RO_SAVED)
     diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
@@ -110,12 +115,19 @@ class DiseaseNotification(ModelView, ModelSQL):
                            searcher='search_patient_field')
     state_changes = fields.One2Many(
         'gnuhealth.disease_notification.statechange', 'notification',
-        'State Changes')
+        'Status Changes')
     # medical_record_num = fields.Function(fields.Char('Medical Record Numbers'),
     #                                      'get_patient_field',
     #                                      searcher='search_patient_field')
 
-    _order = [('date_notified', 'DESC')]
+    @classmethod
+    def __setup__(cls):
+        super(DiseaseNotification, cls).__setup__()
+        cls._order = [('date_notified', 'DESC')]
+        cls._sql_error_messages = {
+            'unique_name': 'There is another notification with this code'
+        }
+        cls._sql_constraints = [('name_uniq', 'UNIQUE(name)', 'unique_name')]
 
     @classmethod
     def get_patient_field(cls, instances, name):
@@ -143,7 +155,7 @@ class DiseaseNotification(ModelView, ModelSQL):
 
     @staticmethod
     def default_status():
-        return 'suspected'
+        return 'waiting'
 
     @staticmethod
     def default_active():
@@ -161,6 +173,8 @@ class DiseaseNotification(ModelView, ModelSQL):
             if not val_name or val_name.endswith(':'):
                 newcode = Sequence.get_id(config.notification_sequence.id)
                 values['name'] = '%s%s' % (values['name'], newcode)
+            elif ':' in val_name and not values.get('diagnosis', False):
+                values['name'] = val_name[val_name.index(':')+1:]
             if values.get('state_changes', False):
                 pass
             else:
@@ -207,6 +221,16 @@ class DiseaseNotification(ModelView, ModelSQL):
                                          (val_name, ))
 
     @classmethod
+    def copy(cls, records, default=None):
+        if default is None:
+            default = {}
+        default = default.copy()
+        default.update(diagnosis=None, state_changes=[])
+        if 'name' in default:
+            del default['name']
+        return super(DiseaseNotification, cls).copy(records, default=default)
+
+    @classmethod
     def epi_week(cls, instances, name):
         epidisp = lambda d: '%d/%02d' % get_epi_week(d)[2:]
         if name == 'epi_week_onset':
@@ -225,7 +249,7 @@ class RiskFactorCondition(ModelSQL, ModelView):
                                    'Notification', required=True)
     pathology = fields.Many2One('gnuhealth.pathology', 'Condition',
                                 required=True, states=RO_SAVED)
-    comment = fields.Char('Comment', size=200)
+    comment = fields.Char('Comment')
 
     @classmethod
     def get_rec_name(cls, records, name):
@@ -238,6 +262,9 @@ class NotifiedSpecimen(ModelSQL, ModelView):
     __name__ = 'gnuhealth.disease_notification.specimen'
     notification = fields.Many2One('gnuhealth.disease_notification',
                                    'Notification', required=True)
+    name = fields.Char('Code/Identifier',
+                       help='Unique barcode or other identifier assigned to, '
+                       'and used for tracking the sample')
     specimen_type = fields.Selection(SPECIMEN_TYPES, 'Type', required=True,
                                      states=RO_SAVED)
     date_taken = fields.Date('Date Sample Taken', required=True,
