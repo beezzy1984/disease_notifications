@@ -70,6 +70,9 @@ class DiseaseNotification(ModelView, ModelSQL):
                        required=True)
     date_notified = fields.DateTime('Date reported', required=True,
                                     states=RO_SAVED)
+    date_received = fields.DateTime(
+        'Date received', states=RO_NEW,
+        help='Date received in the emergency operations centre')
     diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
                                 states=RO_STATE_END, required=False)
     symptoms = fields.One2Many('gnuhealth.disease_notification.symptom',

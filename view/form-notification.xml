@@ -83,6 +83,8 @@
             <group id="group_notifi_extra" colspan="1" col="2">
                 <label name="healthprof" />
                 <field name="healthprof" />
+                <label name="date_received" />
+                <field name="date_received" />
             </group>
             <field name="state_changes" colspan="3" />
         </page>
