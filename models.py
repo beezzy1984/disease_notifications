@@ -47,6 +47,13 @@ SPECIMEN_TYPES = [
     ('rectal swab', 'Rectal Swab'),
     ('blood smear', 'Blood Smear')]
 
+LAB_RESULT_STATES = [
+    (None, ''),
+    ('pos', 'Positive'),
+    ('neg', 'Negative'),
+    ('ind', 'Indeterminate')
+]
+
 
 class GnuHealthSequences(ModelSingleton, ModelSQL, ModelView):
     'Standard Sequences for GNU Health'
@@ -274,8 +281,9 @@ class NotifiedSpecimen(ModelSQL, ModelView):
                              states=RO_SAVED)
     lab_sent_to = fields.Char('Lab sent to', required=True, states=RO_SAVED)
     lab_result = fields.Text('Lab test result', states=RO_NEW)
+    lab_result_state = fields.Selection(LAB_RESULT_STATES, 'Lab Test Result',
+                                        states=RO_NEW)
     date_tested = fields.Date('Date tested', states=RO_NEW)
-    comment = fields.Char('Comment')
     has_result = fields.Function(fields.Boolean('Results in',
                                  help="Lab results have been entered"),
                                  'get_has_result',
@@ -285,12 +293,13 @@ class NotifiedSpecimen(ModelSQL, ModelView):
 
     @classmethod
     def get_has_result(cls, instances, name):
-        return dict([(x.id, bool(x.date_tested and x.lab_result))
+        return dict([(x.id, bool(x.date_tested and x.lab_result_state))
                     for x in instances])
 
     @classmethod
     def search_has_result(cls, field_name, clause):
-        return [(And(Bool(Eval('date_tested')), Bool(Eval('lab_result'))),
+        return [(And(Bool(Eval('date_tested')),
+                     Bool(Eval('lab_result_state'))),
                  clause[1], clause[2])]
 
 

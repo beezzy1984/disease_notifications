@@ -13,15 +13,15 @@
     <label name="name" />
     <field name="name" />
     <newline />
-    <group id="group_results" string="Lab Test Result" colspan="4" col="2">
-        <field name="lab_result" colspan="2"/>
-        <newline />
+    <group id="group_results" string="Lab Test Result" colspan="4" col="4">
         <label name="date_tested" />
         <field name="date_tested" />
+        <label name="lab_result_state" />
+        <field name="lab_result_state" />
+        <newline />
+        <field name="lab_result" colspan="4"/>
     </group>
     <newline />
-    <label name="comment" />
-    <field name="comment" colspan="3" />
     <label name="notification" />
     <field name="notification" colspan="3" />
 </form>
