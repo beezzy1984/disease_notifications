@@ -2,7 +2,7 @@
 <tree string="Travel History">
     <field name="country" expand="1" />
     <field name="subdiv" expand="1" />
-    <field name="departure_date" expand="1" />
+    <field name="arrival_time" expand="1" />
     <field name="comment" expand="1" />
     <field name="notification" />
 </tree>

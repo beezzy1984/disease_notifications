@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<form string="Travel History" col="6">
+<form string="Travel History" col="4">
     <label name="notification" />
-    <field name="notification" colspan="5" />
+    <field name="notification" colspan="3" />
     <newline />
 
     <label name="country" />
@@ -10,7 +10,9 @@
     <field name="subdiv" />
     <label name="departure_date" />
     <field name="departure_date" />
+    <label name="arrival_time" />
+    <field name="arrival_time" />
     <newline />
     <label name="comment" />
-    <field name="comment" colspan="5" />
+    <field name="comment" colspan="3" />
 </form>

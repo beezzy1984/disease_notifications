@@ -89,11 +89,12 @@ class DiseaseNotification(ModelView, ModelSQL):
     epi_week_onset = fields.Function(fields.Char('Epi. Week of onset', size=8,
                                      help='Week of onset (epidemiological)'),
                                      'epi_week', searcher='search_epi_week')
-    date_seen = fields.Date('Date Seen', states=RO_SAVED)
-    encounter = fields.Many2One('gnuhealth.encounter', 'Clinical Encounter',
-                                states={
-                                    'readonly': And(Bool(Eval('id', 0)),
-                                                    Bool(Eval('encounter')))})
+    date_seen = fields.Date('Date Seen')
+    encounter = fields.Many2One(
+        'gnuhealth.encounter', 'Clinical Encounter',
+        # states={'readonly': And(Bool(Eval('id', 0)), Bool(Eval('encounter')))},
+        domain=[('patient', '=', Eval('patient')),
+                ('start_time', '<', Eval('date_notified'))])
     specimen_taken = fields.Boolean('Samples Taken')
     specimens = fields.One2Many('gnuhealth.disease_notification.specimen',
                                 'notification', 'Samples',
@@ -110,7 +111,7 @@ class DiseaseNotification(ModelView, ModelSQL):
     risk_factors = fields.One2Many(
         'gnuhealth.disease_notification.risk_disease', 'notification',
         'Risk Factors', help="Other conditions of merit")
-    hx_travel = fields.Boolean('Overseas Travel',
+    hx_travel = fields.Boolean('Recent Foreign Travels',
                                help="History of Overseas travel in the last"
                                " 4 - 6 weeks")
     hx_locations = fields.One2Many(
@@ -125,7 +126,7 @@ class DiseaseNotification(ModelView, ModelSQL):
                            searcher='search_patient_field')
     state_changes = fields.One2Many(
         'gnuhealth.disease_notification.statechange', 'notification',
-        'Status Changes')
+        'Status Changes', order=[('create_date', 'DESC')], readonly=True)
     # medical_record_num = fields.Function(fields.Char('Medical Record Numbers'),
     #                                      'get_patient_field',
     #                                      searcher='search_patient_field')
@@ -144,6 +145,10 @@ class DiseaseNotification(ModelView, ModelSQL):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
 
     @classmethod
+    def search_patient_field(cls, field_name, clause):
+        return replace_clause_column(clause, 'patient.%s' % field_name)
+
+    @classmethod
     def get_rec_name(cls, records, name):
         return dict([(x.id, x.name) for x in records])
 
@@ -157,6 +162,10 @@ class DiseaseNotification(ModelView, ModelSQL):
             return newcode
         elif curname and ':' in curname:
             return curname[curname.index(':')+1:]
+
+    @fields.depends('encounter')
+    def on_change_with_date_seen(self):
+        return self.encounter.start_time.date() if self.encounter else None
 
     @staticmethod
     def default_healthprof():
@@ -222,7 +231,12 @@ class DiseaseNotification(ModelView, ModelSQL):
         now = {date: date.today(), datetime: datetime.now(), type(None): None}
         date_fields = ['date_onset', 'date_seen', 'date_notified',
                        'admission_date', 'date_of_death']
+       # we need to ensure that none of these fields are in the future
         for rec in records:
+            if rec.encounter:
+                if rec.encounter.patient != rec.patient:
+                    cls.raise_user_error('Invalid encounter selected.'
+                                         'Different patient')
             for fld in date_fields:
                 val = getattr(rec, fld)
                 if val and val > now[type(val)]:
@@ -335,6 +349,8 @@ class TravelHistory(ModelView, ModelSQL):
     departure_date = fields.Date('Date of departure',
                                  help='Date departed from country visited',
                                  states=RO_SAVED)
+    arrival_time = fields.DateTime('Date of arrival',
+                                   help='Date of arrival in this locality')
     comment = fields.Char('Comment')
 
     _order = [('notification', 'DESC'), ('departure_date', 'DESC'),
