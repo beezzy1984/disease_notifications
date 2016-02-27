@@ -19,6 +19,8 @@
         <label name="lab_result_state" />
         <field name="lab_result_state" />
         <newline />
+        <separator name="lab_result" colspan="4" />
+        <newline />
         <field name="lab_result" colspan="4"/>
     </group>
     <newline />

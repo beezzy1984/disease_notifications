@@ -294,7 +294,7 @@ class NotifiedSpecimen(ModelSQL, ModelView):
     date_taken = fields.Date('Date Sample Taken', required=True,
                              states=RO_SAVED)
     lab_sent_to = fields.Char('Lab sent to', required=True, states=RO_SAVED)
-    lab_result = fields.Text('Lab test result', states=RO_NEW)
+    lab_result = fields.Text('Lab result details', states=RO_NEW)
     lab_result_state = fields.Selection(LAB_RESULT_STATES, 'Lab Test Result',
                                         states=RO_NEW)
     date_tested = fields.Date('Date tested', states=RO_NEW)
