@@ -90,6 +90,8 @@ class DiseaseNotification(ModelView, ModelSQL):
                                      help='Week of onset (epidemiological)'),
                                      'epi_week', searcher='search_epi_week')
     date_seen = fields.Date('Date Seen')
+    reporting_facility = fields.Many2One('gnuhealth.institution',
+                                            'Reporting facility')
     encounter = fields.Many2One(
         'gnuhealth.encounter', 'Clinical Encounter',
         # states={'readonly': And(Bool(Eval('id', 0)), Bool(Eval('encounter')))},
