@@ -1,5 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
 <tryton>
-	<data>
-	</data>
+    <data>
+        <menuitem id="menu_surveillance" name="Disease Surveillance"
+            parent="health.gnuhealth_reporting_menu" sequence="40"
+            icon="health-notification-sub" />
+
+        <record model="ir.action.report" id="reptnotif_epidata">
+            <field name="name">Epi Data Spreadsheet</field>
+            <field name="model">gnuhealth.disease_notification</field>
+            <field name="report_name">health_disease_notification.rawdata</field>
+            <field name="active" eval="True" />
+            <field name="template_extension">ods</field>
+            <field name="extension"></field>
+            <field name="report">health_disease_notification/report/raw-data.ods</field>
+        </record>
+        <record model="ir.action.keyword" id="actkw_reptnotif_epidata">
+            <field name="keyword">form_print</field>
+            <field name="model">gnuhealth.disease_notification,-1</field>
+            <field name="action" ref="reptnotif_epidata"/>
+        </record>
+        
+
+        <record model="ir.action.report" id="reptnotif_case_count">
+            <field name="name">Case Counts</field>
+            <field name="model">gnuhealth.disease_notification</field>
+            <field name="report_name">health_disease_notification.case_count</field>
+            <field name="active" eval="True" />
+            <field name="template_extension">ods</field>
+            <field name="extension"></field>
+            <field name="report">health_disease_notification/report/case_count_per_epiweek.ods</field>
+        </record>
+        <record model="ir.action.wizard" id="action_counts_by_epiweek_wizard">
+            <field name="name">Counts By Epi Week</field>
+            <field name="wiz_name">health_disease_notification.case_count_wizard</field>
+        </record>
+        <!-- menu item -->
+        <menuitem id="menu_clinic_summary_report" name="Notifications By Week"
+            parent="menu_surveillance" sequence="40" icon="gnuhealth-list"
+            action="action_counts_by_epiweek_wizard" />
+    </data>
 </tryton>

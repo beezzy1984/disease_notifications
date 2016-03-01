@@ -136,7 +136,7 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def __setup__(cls):
         super(DiseaseNotification, cls).__setup__()
-        cls._order = [('date_notified', 'DESC')]
+        cls._order = [('date_onset', 'DESC')]
         cls._sql_error_messages = {
             'unique_name': 'There is another notification with this code'
         }

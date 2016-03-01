@@ -6,6 +6,10 @@
             <field name="name">health-notification</field>
             <field name="path">icons/notification-message-im.svg</field>
         </record>
+        <record model="ir.ui.icon" id="icon_health_notification_subdue">
+            <field name="name">health-notification-sub</field>
+            <field name="path">icons/notification-message-in.svg</field>
+        </record>
 
         <!-- Disease Notification Views -->
         <record model="ir.ui.view" id="view_tree-notification">
