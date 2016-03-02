@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<form string="Notification Counts By Epi Week - Select Date(s)" col="4">
+    <label name="on_or_after"/>
+    <field name="on_or_after"/>
+    <label name="on_or_before"/>
+    <field name="on_or_before"/>
+    <label name="state" />
+    <field name="state" />
+</form>

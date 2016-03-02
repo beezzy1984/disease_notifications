@@ -30,12 +30,17 @@
             <field name="extension"></field>
             <field name="report">health_disease_notification/report/case_count_per_epiweek.ods</field>
         </record>
+        <record model="ir.ui.view" id="view_form-case_count_start">
+            <field name="model">gnuhealth.disease_notification.report.case_count_start</field>
+            <field name="type">form</field>
+            <field name="name">wizard-case_count_start</field>
+        </record>
         <record model="ir.action.wizard" id="action_counts_by_epiweek_wizard">
             <field name="name">Counts By Epi Week</field>
             <field name="wiz_name">health_disease_notification.case_count_wizard</field>
         </record>
         <!-- menu item -->
-        <menuitem id="menu_clinic_summary_report" name="Notifications By Week"
+        <menuitem id="menu_weekly_case_count" name="Notification Count By Week"
             parent="menu_surveillance" sequence="40" icon="gnuhealth-list"
             action="action_counts_by_epiweek_wizard" />
     </data>

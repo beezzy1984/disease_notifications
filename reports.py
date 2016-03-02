@@ -7,45 +7,55 @@ from trytond.transaction import Transaction
 from trytond.pool import Pool
 from trytond.report import Report
 from itertools import groupby
+from trytond.model import ModelView, fields
 from trytond.wizard import (Wizard, StateView, StateTransition, Button,
                             StateAction)
 from collections import OrderedDict, Counter
-from trytond.modules.health_jamaica.tryton_utils import (
-    get_epi_week, replace_clause_column, get_timezone
-)
-from trytond.modules.health_jamaica.wizards import StartEndDateModel
+from trytond.modules.health_jamaica import tryton_utils as utils
+from .models import NOTIFICATION_STATES
 
-
-__all__ = ['CaseCountReport']
+__all__ = ['CaseCountReport', 'CaseCountStartModel', 'CaseCountWizard']
 
 
 class CaseCountStartModel(ModelView):
     '''Notification date range (of onset)'''
-    __name__ = 'health.disease_notification.report.case_count_start'
+    __name__ = 'gnuhealth.disease_notification.report.case_count_start'
 
     on_or_after = fields.Date('Start date', required=True)
     on_or_before = fields.Date('End date')
+    state = fields.Selection(NOTIFICATION_STATES[:], 'State')
 
+    @classmethod
+    def __setup__(cls):
+        super(CaseCountStartModel, cls).__setup__()
+        cls.state.selection[0] = (None, 'All States')
+
+    @staticmethod
+    def default_state():
+        return 'suspected'
 
 
 class CaseCountWizard(Wizard):
     __name__ = 'health_disease_notification.case_count_wizard'
-    start = StateTransition()
+    start = StateView(
+        'gnuhealth.disease_notification.report.case_count_start',
+        'health_disease_notification.view_form-case_count_start',
+        [Button('Cancel', 'end', 'tryton-cancel'),
+         Button('Generate report', 'generate_report', 'tryton-ok',
+                default=True)])
     generate_report = StateAction(
         'health_disease_notification.reptnotif_case_count')
 
     def transition_generate_report(self):
         return 'end'
 
-    def transition_start(self):
-        return 'generate_report'
-
     def do_generate_report(self, action):
-        # data = {'start_date': self.start.on_or_after,
-        #         'end_date': self.start.on_or_after}
+        data = {'start_date': self.start.on_or_after,
+                'end_date': self.start.on_or_after,
+                'state': self.start.state}
 
-        # if self.start.on_or_before:
-        #     data['end_date'] = self.start.on_or_before
+        if self.start.on_or_before:
+            data['end_date'] = self.start.on_or_before
 
         # if self.start.institution:
         #     data['institution'] = self.start.institution.id
@@ -53,8 +63,7 @@ class CaseCountWizard(Wizard):
         #     self.start.raise_user_error('required_institution')
         #     return 'start'
 
-        # return action, data
-        return action, {}
+        return action, data
 
 
 class CaseCountReport(Report):
@@ -66,17 +75,26 @@ class CaseCountReport(Report):
     @classmethod
     def parse(cls, report, records, data, localcontext):
         pool = Pool()
-        tz = get_timezone()
-        # start_date = utils.get_start_of_day(data['start_date'], tz)
-        # end_date = utils.get_start_of_next_day(data['end_date'], tz)
-        start_date = datetime(2016, 1, 1, 0, 0, 0, tzinfo=tz)
-        end_date = datetime.now(tz)
+        tz = utils.get_timezone()
+        start_date = utils.get_start_of_day(data['start_date'], tz)
+        end_date = utils.get_start_of_next_day(data['end_date'], tz)
+        status_dict = dict(NOTIFICATION_STATES)
+        if data['state']:
+            query_status = data['state']
+            selected_status = status_dict.get(data['state'], 'Unknown')
+        else:
+            query_status = False
+            selected_status = 'All'
+
+        search_domain = [('date_notified', '>=', start_date),
+                         ('date_notified', '<', end_date)]
+        if query_status:
+            search_domain.append(('status', '=', query_status))
         notifi_model = pool.get('gnuhealth.disease_notification')
         notification_ids = notifi_model.search(
-            [('date_notified', '>=', start_date),
-             ('date_notified', '<', end_date)],
-            order=[('diagnosis', 'ASC'), ('date_onset', 'ASC')])
-        notifications = notifi_model.read(notification_ids,
+            search_domain, order=[('diagnosis', 'ASC'), ('date_onset', 'ASC')])
+        notifications = notifi_model.read(
+            notification_ids,
             fields_names=['diagnosis.name', 'date_onset', 'name',
                           'epi_week_onset', 'diagnosis'])
         counts = {}
@@ -94,9 +112,9 @@ class CaseCountReport(Report):
 
         localcontext.update(weeks=sorted(epi_weeks.keys()),
                             disease_counts=count_out, week_totals=epi_weeks,
-                            start_date_str=start_date.strftime('%Y-%b-%d'),
-                            end_date_str=end_date.strftime('%Y-%b-%d'),
-                            status='All')
-        print('%s\n%s\n%s' % ('*'*77, repr(notifications), '*'*77))
+                            start_date_str=start_date.strftime('%Y-%m-%d'),
+                            end_date_str=end_date.strftime('%Y-%m-%d'),
+                            status=selected_status)
+
         return super(CaseCountReport, cls).parse(report, records, data,
                                                  localcontext)
