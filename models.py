@@ -3,7 +3,7 @@ from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
 from trytond.modules.health_jamaica.tryton_utils import (
-    get_epi_week, replace_clause_column
+    get_epi_week, replace_clause_column, epiweek_str
 )
 
 import re
@@ -258,9 +258,8 @@ class DiseaseNotification(ModelView, ModelSQL):
 
     @classmethod
     def epi_week(cls, instances, name):
-        epidisp = lambda d: '%d/%02d' % get_epi_week(d)[2:]
         if name == 'epi_week_onset':
-            return dict([(k.id, epidisp(k.date_onset)) for k in instances])
+            return dict([(k.id, epiweek_str(k.date_onset)) for k in instances])
 
     @classmethod
     def search_epi_week(cls, field_name, clause):

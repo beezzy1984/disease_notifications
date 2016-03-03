@@ -76,8 +76,20 @@ class CaseCountReport(Report):
     def parse(cls, report, records, data, localcontext):
         pool = Pool()
         tz = utils.get_timezone()
-        start_date = utils.get_start_of_day(data['start_date'], tz)
-        end_date = utils.get_start_of_next_day(data['end_date'], tz)
+        start_week = utils.get_epi_week(data['start_date'])
+        start_date = utils.get_start_of_day(start_week[0], tz)
+        end_week = utils.get_epi_week(data['end_date'])
+        end_date = utils.get_start_of_next_day(end_week[1], tz)
+        all_weeks = [utils.epiweek_str(start_week)]
+        if start_week[2:] != end_week[2:]:
+            adder = 1
+            while (start_date + timedelta(7 * adder)) < end_date:
+                all_weeks.append(
+                    utils.epiweek_str(start_date + timedelta(7 * adder)))
+                adder += 1
+            all_weeks.append(utils.epiweek_str(end_week))
+
+        empty_weeks = dict(zip(all_weeks, [0] * len(all_weeks)))
         status_dict = dict(NOTIFICATION_STATES)
         if data['state']:
             query_status = data['state']
@@ -98,10 +110,10 @@ class CaseCountReport(Report):
             fields_names=['diagnosis.name', 'date_onset', 'name',
                           'epi_week_onset', 'diagnosis'])
         counts = {}
-        epi_weeks = Counter()
+        epi_weeks = Counter(empty_weeks.copy())
         for pathology, pnotif in groupby(notifications,
                                          lambda x: x['diagnosis.name']):
-            counts.setdefault(pathology, Counter([])).update(
+            counts.setdefault(pathology, Counter(empty_weeks.copy())).update(
                 Counter([x['epi_week_onset'] for x in pnotif]))
         count_out = []
         for p, c in counts.items():
