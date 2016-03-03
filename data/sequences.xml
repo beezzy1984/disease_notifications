@@ -11,7 +11,6 @@
             <field name="type">hexadecimal timestamp</field>
             <field name="timestamp_rounding" eval="0.1" />
             <field name="timestamp_offset" eval="1325412420.0" />
-            <field name="last_timestamp" eval="0" />
             <!-- offset = time at 2012-01-01 00:00:00 EST -->
         </record>
 
