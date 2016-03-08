@@ -63,7 +63,7 @@ setup(
         'trytond.modules.'+name: info.get('xml', [])
             + info.get('translation', [])
             + ['tryton.cfg', 'view/*.xml', 'doc/*.rst', 'locale/*.po',
-               'report/*.odt', 'icons/*.svg', 'COPYRIGHT'],
+               'report/*.odt', 'report/*.ods', 'icons/*.svg', 'COPYRIGHT'],
     },
 
     classifiers=[

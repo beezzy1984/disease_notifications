@@ -53,7 +53,12 @@ LAB_RESULT_STATES = [
     ('neg', 'Negative'),
     ('ind', 'Indeterminate')
 ]
-
+LAB_TEST_TYPES = [
+    (None, ''),
+    ('igm', 'IgM'),
+    ('igg', 'IgG'),
+    ('pcr', 'PCR')
+]
 
 class GnuHealthSequences(ModelSingleton, ModelSQL, ModelView):
     'Standard Sequences for GNU Health'
@@ -79,7 +84,7 @@ class DiseaseNotification(ModelView, ModelSQL):
                                     states=RO_SAVED)
     date_received = fields.DateTime(
         'Date received', states=RO_NEW,
-        help='Date received in the emergency operations centre')
+        help='Date received the National Surveillance Unit')
     diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
                                 states=RO_STATE_END, required=False)
     symptoms = fields.One2Many('gnuhealth.disease_notification.symptom',
@@ -89,9 +94,12 @@ class DiseaseNotification(ModelView, ModelSQL):
     epi_week_onset = fields.Function(fields.Char('Epi. Week of onset', size=8,
                                      help='Week of onset (epidemiological)'),
                                      'epi_week', searcher='search_epi_week')
-    date_seen = fields.Date('Date Seen')
+    date_seen = fields.Date('Date Seen', help='Date seen by a medical officer')
     reporting_facility = fields.Many2One('gnuhealth.institution',
-                                            'Reporting facility')
+                                         'Reporting facility')
+    reporting_facility_other = fields.Char(
+        'Other Reporting location',
+        help='Used when the report came from an institution not found above')
     encounter = fields.Many2One(
         'gnuhealth.encounter', 'Clinical Encounter',
         # states={'readonly': And(Bool(Eval('id', 0)), Bool(Eval('encounter')))},
@@ -295,8 +303,9 @@ class NotifiedSpecimen(ModelSQL, ModelView):
     date_taken = fields.Date('Date Sample Taken', required=True,
                              states=RO_SAVED)
     lab_sent_to = fields.Char('Lab sent to', required=True, states=RO_SAVED)
+    lab_test_type = fields.Selection(LAB_TEST_TYPES, 'Lab Test Type')
     lab_result = fields.Text('Lab result details', states=RO_NEW)
-    lab_result_state = fields.Selection(LAB_RESULT_STATES, 'Lab Test Result',
+    lab_result_state = fields.Selection(LAB_RESULT_STATES, 'Test Result State',
                                         states=RO_NEW)
     date_tested = fields.Date('Date tested', states=RO_NEW)
     has_result = fields.Function(fields.Boolean('Results in',

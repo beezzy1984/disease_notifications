@@ -4,6 +4,7 @@
     <field name="date_taken" />
     <field name="lab_sent_to" />
     <field name="name" />
+    <field name="lab_test_type" />
     <field name="lab_result_state" expand="1"/>
     <field name="notification" />
 </tree>

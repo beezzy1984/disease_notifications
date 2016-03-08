@@ -85,6 +85,8 @@
                 <field name="healthprof" />
                 <label name="reporting_facility" />
                 <field name="reporting_facility" />
+                <label name="reporting_facility_other" />
+                <field name="reporting_facility_other" />
                 <label name="date_received" />
                 <field name="date_received" />
             </group>
