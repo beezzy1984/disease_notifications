@@ -23,7 +23,8 @@ class CaseCountStartModel(ModelView):
 
     on_or_after = fields.Date('Start date', required=True)
     on_or_before = fields.Date('End date')
-    state = fields.Selection(NOTIFICATION_STATES[:], 'State')
+    state = fields.Selection(NOTIFICATION_STATES[:-1], 'State',
+                             sort=False)
 
     @classmethod
     def __setup__(cls):
