@@ -94,7 +94,7 @@ class DiseaseNotification(ModelView, ModelSQL):
                              help='Date of onset of the illness')
     epi_week_onset = fields.Function(fields.Char('Epi. Week of onset', size=8,
                                      help='Week of onset (epidemiological)'),
-                                     'epi_week', searcher='search_epi_week')
+                                     'epi_week')
     date_seen = fields.Date('Date Seen', help='Date seen by a medical officer')
     reporting_facility = fields.Many2One('gnuhealth.institution',
                                          'Reporting facility')
@@ -275,10 +275,6 @@ class DiseaseNotification(ModelView, ModelSQL):
     def epi_week(cls, instances, name):
         if name == 'epi_week_onset':
             return dict([(k.id, epiweek_str(k.date_onset)) for k in instances])
-
-    @classmethod
-    def search_epi_week(cls, field_name, clause):
-        pass
 
 
 class RiskFactorCondition(ModelSQL, ModelView):
