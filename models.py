@@ -30,7 +30,8 @@ NOTIFICATION_STATES = [
     ('notsuspected', 'Not Suspected'),
     ('unclassified', 'Unclassified'),
     ('cannotclassify', 'Cannot Classify'),
-    ('delete', 'Duplicate, Discard')
+    ('delete', 'Duplicate, Discard'),
+    ('invalid', 'Invalid (will not classify)')
 ]
 NOTIFICATION_END_STATES = ['discarded', 'delete', 'confirmed', 'epiconfirm',
                            'notsuspected', 'discarded']
@@ -161,6 +162,12 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_rec_name(cls, records, name):
         return dict([(x.id, x.name) for x in records])
+
+    @classmethod
+    def search_rec_name(cls, field_name, clause):
+        _, operand, val = clause
+        return ['OR', ('patient.puid', operand, val),
+                ('name', operand, val)]
 
     @fields.depends('diagnosis', 'name')
     def on_change_with_name(self):
