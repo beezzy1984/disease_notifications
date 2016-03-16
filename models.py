@@ -58,8 +58,13 @@ LAB_TEST_TYPES = [
     (None, ''),
     ('igm', 'IgM'),
     ('igg', 'IgG'),
-    ('pcr', 'PCR')
+    ('pcr', 'PCR'),
+    ('cs', 'C/S'),
+    ('microscopy', 'Microscopy'),
+    ('ovacystpara', 'Ova, Cysts & Parasites'),
+    ('other', 'Other')
 ]
+
 
 class GnuHealthSequences(ModelSingleton, ModelSQL, ModelView):
     'Standard Sequences for GNU Health'
