@@ -81,13 +81,17 @@ class DiseaseNotification(ModelView, ModelSQL):
                               sort=False)
     name = fields.Char('Code', size=18, states={'readonly': True},
                        required=True)
+    tracking_code = fields.Char('Case Tracking Code', select=True)
     date_notified = fields.DateTime('Date reported', required=True,
                                     states=RO_SAVED)
     date_received = fields.DateTime(
         'Date received', states=RO_NEW,
         help='Date received the National Surveillance Unit')
-    diagnosis = fields.Many2One('gnuhealth.pathology', 'Presumptive Diagnosis',
+    diagnosis = fields.Many2One('gnuhealth.pathology', 'Suspected Diagnosis',
                                 states=RO_STATE_END, required=False)
+    diagnosis_confirmed = fields.Many2One(
+        'gnuhealth.pathology', 'Confirmed Diagnosis', required=False,
+        states={'invisible': Eval('id', 0) < 0})
     symptoms = fields.One2Many('gnuhealth.disease_notification.symptom',
                                'name', 'Symptoms', states=RO_STATE_END)
     date_onset = fields.Date('Date of Onset',
