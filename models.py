@@ -128,6 +128,7 @@ class DiseaseNotification(ModelView, ModelSQL):
     date_of_death = fields.Date('Date of Death', states=ONLY_IF_DEAD)
     healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Reported by')
     comments = fields.Text('Additional comments')
+    comments_short = fields.Function(fields.Char('Comments'), 'short_comment')
     risk_factors = fields.One2Many(
         'gnuhealth.disease_notification.risk_disease', 'notification',
         'Risk Factors', help="Other conditions of merit")
@@ -163,6 +164,12 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
+
+    @classmethod
+    def short_comment(cls, instances, name):
+        return dict(map(lambda x: (x.id,
+                    x.comments and ' '.join(x.comments.split('\n'))[:40] or ''),
+                    instances))
 
     @classmethod
     def search_patient_field(cls, field_name, clause):
@@ -249,7 +256,8 @@ class DiseaseNotification(ModelView, ModelSQL):
                                         'healthprof': healthprof})
         return_val = super(DiseaseNotification, cls).write(records, values,
                                                            *args)
-        NotificationStateChange.create(to_make)
+        nsc = Pool().get('gnuhealth.disease_notification.statechange')
+        nsc.create(to_make)
         return return_val
 
     @classmethod
@@ -396,8 +404,7 @@ class NotificationStateChange(ModelSQL, ModelView):
     # changed the state of the notification and when it was changed.
     # Records in this model will, be created automatically
     healthprof = fields.Many2One('gnuhealth.healthprofessional', 'Changed by')
-    change_date = fields.Function(fields.DateTime('Changed on'),
-                                  'get_change_date')
+    change_date = fields.DateTime('Changed on')
     creator = fields.Function(fields.Char('Changed by'), 'get_creator_name')
 
     def get_creator_name(self, name):
@@ -409,6 +416,6 @@ class NotificationStateChange(ModelSQL, ModelView):
         else:
             return self.create_uid.name
 
-    def get_change_date(self, name):
-        # we're sending back the create date since these are readonly
-        return self.create_date
+    @staticmethod
+    def default_change_date():
+        return datetime.now()
