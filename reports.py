@@ -10,11 +10,67 @@ from itertools import groupby
 from trytond.model import ModelView, fields
 from trytond.wizard import (Wizard, StateView, StateTransition, Button,
                             StateAction)
-from collections import OrderedDict, Counter
+from collections import OrderedDict, Counter, defaultdict
 from trytond.modules.health_jamaica import tryton_utils as utils
 from .models import NOTIFICATION_STATES
 
-__all__ = ['CaseCountReport', 'CaseCountStartModel', 'CaseCountWizard']
+__all__ = ['RawDataReport', 'CaseCountReport', 'CaseCountStartModel',
+           'CaseCountWizard']
+
+
+class RawDataReport(Report):
+    'Disease Notification Spreadsheet Export'
+    __name__ = 'health_disease_notification.rawdata'
+
+    @classmethod
+    def parse(cls, report, records, data, localcontext):
+        symptoms = [("R19.7", "Diarrhoea, unspecified"),
+                    ("R53.1", "Asthenia (generalized weakness)"),
+                    ("R29.5", "Joint pain or stiffness (arthralgia)"),
+                    ("R29.7", "Joint swelling "),
+                    ("R60.2", "Periarticular oedema"),
+                    ("R52.3", "Muscle pain"),
+                    ("R52.4", "Back pain"),
+                    ("R11.1", "Vomitting"),
+                    ("R50.9", "Fever, unspecified "),
+                    ("R05", "Cough"),
+                    ("R06.0", "Dyspnoea "),
+                    ("R06.2", "Wheezing"),
+                    ("R07.4", "Chest pain"),
+                    ("R60.0", "Swelling of feet"),
+                    ("R56.0", "Convulsions, not elsewhere classified"),
+                    ("R07.0", "Pain in throat (sore throat)"),
+                    ("R21", "Rash"),
+                    ("R68.6", "Non-purulent conjunctivitis "),
+                    ("R68.7", "Conjunctival hyperaemia"),
+                    ("R51", "Headache"),
+                    ("R53", "Malaise and fatigue"),
+                    ("R17", "Jaundice"),
+                    ("R29.1", "Meningeal irritation "),
+                    ("R40", "Altered consciousness/somnolence "),
+                    ("R40.1", "Stupor"),
+                    ("R26", "Paralysis"),
+                    ("R04.2", "Cough with Haemorrhage "),
+                    ("R58", "Haemorrhage"),
+                    ("R04.4", "Epistaxis")]
+        default_symptoms = defaultdict(lambda: u'')
+        ordered_symptoms = defaultdict(default_symptoms.copy)
+        other_symptoms = default_symptoms.copy()
+        symptom_set = set([x for x, _ in symptoms])
+        for rec in records:
+            my_symptoms = set([x.pathology.code for x in rec.symptoms])
+            my_yeses = my_symptoms.intersection(symptom_set)
+            my_others = my_symptoms.difference(symptom_set)
+            ordered_symptoms[rec.id].update([(r, u'Yes') for r in my_yeses])
+            if my_others:
+                other_symptoms[rec.id] = u', '.join(sorted(my_others))
+        localcontext.update(
+            ordered_symptoms=ordered_symptoms,
+            symptom_list=symptoms,
+            other_symptoms=other_symptoms)
+
+        return super(RawDataReport, cls).parse(report, records, data,
+                                               localcontext)
 
 
 class CaseCountStartModel(ModelView):

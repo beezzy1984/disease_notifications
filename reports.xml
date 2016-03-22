@@ -6,7 +6,7 @@
             icon="health-notification-sub" />
 
         <record model="ir.action.report" id="reptnotif_epidata">
-            <field name="name">Epi Data Spreadsheet</field>
+            <field name="name">Spreadsheet Export</field>
             <field name="model">gnuhealth.disease_notification</field>
             <field name="report_name">health_disease_notification.rawdata</field>
             <field name="active" eval="True" />

@@ -2,7 +2,8 @@ from trytond.pool import Pool
 from .models import (DiseaseNotification, TravelHistory, NotificationSymptom,
                      NotifiedSpecimen, GnuHealthSequences, RiskFactorCondition,
                      NotificationStateChange)
-from .reports import CaseCountReport, CaseCountWizard, CaseCountStartModel
+from .reports import (RawDataReport, CaseCountReport, CaseCountWizard,
+                      CaseCountStartModel)
 
 
 def register():
@@ -18,6 +19,7 @@ def register():
         module='health_disease_notification', type_='model')
 
     Pool.register(
+        RawDataReport,
         CaseCountReport,
         module='health_disease_notification', type_='report')
 
