@@ -159,7 +159,8 @@ class DiseaseNotification(ModelView, ModelSQL):
         cls._sql_error_messages = {
             'unique_name': 'There is another notification with this code'
         }
-        cls._sql_constraints = [('name_uniq', 'UNIQUE(name)', 'unique_name')]
+        cls._sql_constraints = [
+            ('name_uniq', 'UNIQUE(name)', 'The code must be unique.')]
 
     @classmethod
     def get_patient_field(cls, instances, name):
