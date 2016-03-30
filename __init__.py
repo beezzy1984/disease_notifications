@@ -1,7 +1,7 @@
 from trytond.pool import Pool
 from .models import (DiseaseNotification, TravelHistory, NotificationSymptom,
                      NotifiedSpecimen, GnuHealthSequences, RiskFactorCondition,
-                     NotificationStateChange)
+                     NotificationStateChange, LabResultType)
 from .reports import (RawDataReport, CaseCountReport, CaseCountWizard,
                       CaseCountStartModel)
 
@@ -11,6 +11,7 @@ def register():
         GnuHealthSequences,
         DiseaseNotification,
         NotificationSymptom,
+        LabResultType,
         NotifiedSpecimen,
         RiskFactorCondition,
         TravelHistory,

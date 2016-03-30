@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form string="Disease Notification/Lab Result Type" col="4">
+    <label name="name" />
+    <field name="name" />
+    <label name="code" />
+    <field name="code" />
+</form>

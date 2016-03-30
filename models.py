@@ -46,7 +46,8 @@ SPECIMEN_TYPES = [
     ('eye swab', 'Eye Swab'),
     ('nasopharyngeal swab', 'Nasopharyngeal Swab'),
     ('rectal swab', 'Rectal Swab'),
-    ('blood smear', 'Blood Smear')]
+    ('blood smear', 'Blood Smear'),
+    ('unknown', 'Unknown')]
 
 LAB_RESULT_STATES = [
     (None, ''),
@@ -84,6 +85,8 @@ class DiseaseNotification(ModelView, ModelSQL):
                               states=RO_SAVED)
     status = fields.Selection(NOTIFICATION_STATES, 'Status', required=True,
                               sort=False)
+    status_display = fields.Function(fields.Char('State'),
+                                     'get_selection_display')
     name = fields.Char('Code', size=18, states={'readonly': True},
                        required=True)
     tracking_code = fields.Char('Case Tracking Code', select=True)
@@ -105,14 +108,15 @@ class DiseaseNotification(ModelView, ModelSQL):
                                      help='Week of onset (epidemiological)'),
                                      'epi_week')
     date_seen = fields.Date('Date Seen', help='Date seen by a medical officer')
-    reporting_facility = fields.Many2One('gnuhealth.institution',
-                                         'Reporting facility')
+    reporting_facility = fields.Many2One(
+        'gnuhealth.institution', 'Reporting facility',
+        states={'invisible': Bool(Eval('reporting_facility_other'))})
     reporting_facility_other = fields.Char(
         'Other Reporting location',
-        help='Used when the report came from an institution not found above')
+        help='Used when the report came from an institution not found above',
+        states={'invisible': Bool(Eval('reporting_facility'))})
     encounter = fields.Many2One(
         'gnuhealth.encounter', 'Clinical Encounter',
-        # states={'readonly': And(Bool(Eval('id', 0)), Bool(Eval('encounter')))},
         domain=[('patient', '=', Eval('patient')),
                 ('start_time', '<', Eval('date_notified'))])
     specimen_taken = fields.Boolean('Samples Taken')
@@ -185,6 +189,10 @@ class DiseaseNotification(ModelView, ModelSQL):
         _, operand, val = clause
         return ['OR', ('patient.puid', operand, val),
                 ('name', operand, val)]
+
+    @fields.depends('reporting_facility')
+    def on_change_reporting_facility(self, *arg, **kwarg):
+        return {'reporting_facility_other': ''}
 
     @fields.depends('diagnosis', 'name')
     def on_change_with_name(self):
@@ -266,7 +274,7 @@ class DiseaseNotification(ModelView, ModelSQL):
         now = {date: date.today(), datetime: datetime.now(), type(None): None}
         date_fields = ['date_onset', 'date_seen', 'date_notified',
                        'admission_date', 'date_of_death']
-       # we need to ensure that none of these fields are in the future
+        # we need to ensure that none of these fields are in the future
         for rec in records:
             if rec.encounter:
                 if rec.encounter.patient != rec.patient:
@@ -294,6 +302,14 @@ class DiseaseNotification(ModelView, ModelSQL):
         if name == 'epi_week_onset':
             return dict([(k.id, epiweek_str(k.date_onset)) for k in instances])
 
+    @classmethod
+    def get_selection_display(cls, instances, field_name):
+        real_field = field_name[:0 - len('_display')]
+        field_selections = cls._fields[real_field].selection
+        xdict = dict(filter(lambda x: x[0], field_selections))
+        return dict(map(lambda x: (x.id, xdict.get(getattr(x, real_field), '')),
+                    instances))
+
 
 class RiskFactorCondition(ModelSQL, ModelView):
     'Risk Factor Conditions'
@@ -310,8 +326,24 @@ class RiskFactorCondition(ModelSQL, ModelView):
         return dict([(x.id, x.pathology.rec_name) for x in records])
 
 
+class LabResultType(ModelSQL, ModelView):
+    'Notification Lab Result Type'
+
+    __name__ = 'gnuhealth.disease_notification.labresulttype'
+    name = fields.Char('Name', size=50)
+    code = fields.Char('Code', size=20)
+
+    @classmethod
+    def __setup__(cls):
+        super(LabResultType, cls).__setup__()
+        cls._sql_error_messages = {
+            'unique_code': 'There is another result type with this code'
+        }
+        cls._sql_constraints = [('code_uniq', 'UNIQUE(code)', 'unique_code')]
+
+
 class NotifiedSpecimen(ModelSQL, ModelView):
-    'Sample'
+    'Disease Notification Sample'
 
     __name__ = 'gnuhealth.disease_notification.specimen'
     notification = fields.Many2One('gnuhealth.disease_notification',
@@ -326,6 +358,9 @@ class NotifiedSpecimen(ModelSQL, ModelView):
     lab_sent_to = fields.Char('Lab sent to', required=True, states=RO_SAVED)
     lab_test_type = fields.Selection(LAB_TEST_TYPES, 'Lab Test Type')
     lab_result = fields.Text('Lab result details', states=RO_NEW)
+    lab_result_type = fields.Many2One(
+        'gnuhealth.disease_notification.labresulttype', 'Result type',
+        states=RO_NEW)
     lab_result_state = fields.Selection(LAB_RESULT_STATES, 'Test Result State',
                                         states=RO_NEW)
     date_tested = fields.Date('Date tested', states=RO_NEW)
@@ -335,6 +370,12 @@ class NotifiedSpecimen(ModelSQL, ModelView):
                                  searcher='search_has_result')
     # lab_request = fields.Many2One('gnuhealth.patient.lab.test',
     #                               'Lab Test Request')
+    specimen_type_display = fields.Function(fields.Char('Sample Type'),
+                                            'get_selection_display')
+    lab_test_type_display = fields.Function(fields.Char('Test Type'),
+                                            'get_selection_display')
+    lab_result_state_display = fields.Function(fields.Char('Result State'),
+                                               'get_selection_display')
 
     @classmethod
     def get_has_result(cls, instances, name):
@@ -346,6 +387,14 @@ class NotifiedSpecimen(ModelSQL, ModelView):
         return [(And(Bool(Eval('date_tested')),
                      Bool(Eval('lab_result_state'))),
                  clause[1], clause[2])]
+
+    @classmethod
+    def get_selection_display(cls, instances, field_name):
+        real_field = field_name[:0-len('_display')]
+        field_selections = cls._fields[real_field].selection
+        xdict = dict(filter(lambda x: x[0], field_selections))
+        return dict(map(lambda x: (x.id, xdict.get(getattr(x, real_field), '')),
+                    instances))
 
 
 class NotificationSymptom(ModelView, ModelSQL):

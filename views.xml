@@ -131,5 +131,37 @@
         </record>
     -->
 
+        <!-- Disease notifications menu under GNU Health Configuration -->
+        <menuitem name="Disease Notifications" id="menu_nofications_config" icon="health-notification-sub" parent="health.gnuhealth_conf_menu" />
+
+        <!-- config menu to update lab result types -->
+        <record model="ir.ui.view" id="view_tree-labresulttype">
+            <field name="model">gnuhealth.disease_notification.labresulttype</field>
+            <field name="type">tree</field>
+            <field name="name">tree-lab_result_types</field>
+        </record>
+        <record model="ir.ui.view" id="view_form-labresulttype">
+            <field name="model">gnuhealth.disease_notification.labresulttype</field>
+            <field name="type">form</field>
+            <field name="name">form-lab_result_types</field>
+        </record>
+
+        <record model="ir.action.act_window" id="actwin-dn_labresulttype">
+            <field name="name">Lab Result Types</field>
+            <field name="res_model">gnuhealth.disease_notification.labresulttype</field>
+        </record>
+        <record model="ir.action.act_window.view" id="actview_tree_dn_labresulttype">
+            <field name="view" ref="view_tree-labresulttype" />
+            <field name="act_window" ref="actwin-dn_labresulttype" />
+            <field name="sequence" eval="10" />
+        </record>
+        <record model="ir.action.act_window.view" id="actview_form_dn_labresulttype">
+            <field name="view" ref="view_form-labresulttype" />
+            <field name="act_window" ref="actwin-dn_labresulttype" />
+            <field name="sequence" eval="20" />
+        </record>
+        <menuitem id="menu_labresulttype" parent="menu_nofications_config" 
+            action="actwin-dn_labresulttype" icon="gnuhealth-list" />
+
     </data>
 </tryton>

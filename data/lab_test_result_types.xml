@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tryton>
+    <data>
+        <record id="DEN1" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">DEN-1</field>
+            <field name="code">DEN1</field>
+        </record>
+        <record id="DEN2" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">DEN-2</field>
+            <field name="code">DEN2</field>
+        </record>
+        <record id="DEN3" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">DEN-3</field>
+            <field name="code">DEN3</field>
+        </record>
+        <record id="DEN4" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">DEN-4</field>
+            <field name="code">DEN4</field>
+        </record>
+        <record id="DEN5" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">DEN-5</field>
+            <field name="code">DEN5</field>
+        </record>
+        <record id="H1N1-09" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza A H1N1pdm09</field>
+            <field name="code">H1N1-09</field>
+        </record>
+        <record id="FLUB" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza B</field>
+            <field name="code">FLUB</field>
+        </record>
+        <record id="PARAFLU" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Parainfluenza</field>
+            <field name="code">PARAFLU</field>
+        </record>
+        <record id="RSV" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">RSV</field>
+            <field name="code">RSV</field>
+        </record>
+        <record id="ADENO" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Adenovirus</field>
+            <field name="code">ADENO</field>
+        </record>
+        <record id="CORANO" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Coronavirus</field>
+            <field name="code">CORANO</field>
+        </record>
+        <record id="RHINO" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Rhinovirus</field>
+            <field name="code">RHINO</field>
+        </record>
+        <record id="BOCA" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Bocavirus</field>
+            <field name="code">BOCA</field>
+        </record>
+        <record id="OTHERRESP" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Other Respiratory Virus</field>
+            <field name="code">OTHERRESP</field>
+        </record>
+        <record id="FLUANOT" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza A not subtyped</field>
+            <field name="code">FLUANOT</field>
+        </record>
+        <record id="FLUABLANK" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza A not subtypable</field>
+            <field name="code">FLUABLANK</field>
+        </record>
+        <record id="FLUH1" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza A (H1)</field>
+            <field name="code">FLUH1</field>
+        </record>
+        <record id="METHAPNEU" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Methapneumovirus</field>
+            <field name="code">METHAPNEU</field>
+        </record>
+        <record id="FLUAH3" model="gnuhealth.disease_notification.labresulttype">
+            <field name="name">Influenza A (H3)</field>
+            <field name="code">FLUAH3</field>
+        </record>
+    </data>
+</tryton>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
