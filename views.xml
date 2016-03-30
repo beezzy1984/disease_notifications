@@ -25,7 +25,19 @@
         <record model="ir.action.act_window" id="actwin-notification">
             <field name="name">Disease Notifications</field>
             <field name="res_model">gnuhealth.disease_notification</field>
+            <field name="domain" eval="None"></field>
+        </record>
+        <record model="ir.action.act_window.domain" id="actwin-notification_valid">
+            <field name="sequence" eval="10"/>
             <field name="domain">[('status','!=','invalid')]</field>
+            <field name="act_window" ref="actwin-notification"/>
+            <field name="name">Valid</field>
+        </record>
+        <record model="ir.action.act_window.domain" id="actwin-notification_invalid">
+            <field name="sequence" eval="20"/>
+            <field name="domain">[('status','=','invalid')]</field>
+            <field name="act_window" ref="actwin-notification"/>
+            <field name="name">Invalid</field>
         </record>
         <record model="ir.action.act_window.view" id="actview_tree_notification">
             <field name="view" ref="view_tree-notification" />
@@ -38,31 +50,10 @@
             <field name="sequence" eval="20" />
         </record>
 
-        <!-- Some people might want to see invalid notifications -->
-        <record model="ir.action.act_window" id="actwin-notification_invalids">
-            <field name="name">Invalid Notifications</field>
-            <field name="res_model">gnuhealth.disease_notification</field>
-            <field name="domain">[('status','=','invalid')]</field>
-        </record>
-        <record model="ir.action.act_window.view" id="actview_tree_notification_invalids">
-            <field name="view" ref="view_tree-notification" />
-            <field name="act_window" ref="actwin-notification_invalids" />
-            <field name="sequence" eval="10" />
-        </record>
-        <record model="ir.action.act_window.view" id="actview_form_notification_invalids">
-            <field name="view" ref="view_form-notification" />
-            <field name="act_window" ref="actwin-notification_invalids" />
-            <field name="sequence" eval="20" />
-        </record>
-
         <!--  Menu Item Links -->
         <menuitem action="actwin-notification"
             id="menu-actwin-notification" icon="health-notification"
             parent="health.gnuhealth_demographics_menu" sequence="5" />
-
-        <menuitem action="actwin-notification_invalids"
-            id="menu-actwin-notification_invalids" icon="gnuhealth-list"
-            parent="menu-actwin-notification" sequence="5" />
 
         <!-- Notification Specimens -->
         <record model="ir.ui.view" id="view_tree-specimen">
@@ -118,18 +109,6 @@
             <field name="type">tree</field>
             <field name="name">tree-notifi_statechange</field>
         </record>
-<!--        
-        <record model="ir.action.act_window.view" id="">
-            <field name="view" ref="" />
-            <field name="act_window" ref="" />
-            <field name="sequence" eval="" />
-        </record>
-        <record model="" id="">
-            <field name=""></field>
-            <field name=""></field>
-            <field name=""></field>
-        </record>
-    -->
 
         <!-- Disease notifications menu under GNU Health Configuration -->
         <menuitem name="Disease Notifications" id="menu_nofications_config" icon="health-notification-sub" parent="health.gnuhealth_conf_menu" />
