@@ -299,8 +299,10 @@ class DiseaseNotification(ModelView, ModelSQL):
 
     @classmethod
     def epi_week(cls, instances, name):
+        def ewcalc(k):
+            return (k.id, epiweek_str(k.date_onset) if k.date_onset else '')
         if name == 'epi_week_onset':
-            return dict([(k.id, epiweek_str(k.date_onset)) for k in instances])
+            return dict(map(ewcalc, instances))
 
     @classmethod
     def get_selection_display(cls, instances, field_name):
