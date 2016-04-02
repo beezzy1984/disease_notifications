@@ -333,7 +333,7 @@ class LabResultType(ModelSQL, ModelView):
 
     __name__ = 'gnuhealth.disease_notification.labresulttype'
     name = fields.Char('Name', size=50)
-    code = fields.Char('Code', size=20)
+    code = fields.Char('Code', size=20, required=True)
 
     @classmethod
     def __setup__(cls):
