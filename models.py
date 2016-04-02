@@ -205,6 +205,13 @@ class DiseaseNotification(ModelView, ModelSQL):
         elif curname and ':' in curname:
             return curname[curname.index(':')+1:]
 
+    @fields.depends('diagnosis_confirmed', 'status')
+    def on_change_diagnosis_confirmed(self):
+        if self.diagnosis_confirmed and self.status == 'suspected':
+            return {'status': 'confirmed'}
+        else:
+            return {}
+
     @fields.depends('encounter')
     def on_change_with_date_seen(self):
         return self.encounter.start_time.date() if self.encounter else None

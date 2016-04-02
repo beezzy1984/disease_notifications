@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tryton>
+    <data>
+    <!-- Model Access Rights: LabResultType -->
+        <record model="ir.model.access" id="model-grp_admin_labresulttype">
+            <field name="model" search="[('model','=', 'gnuhealth.disease_notification.labresulttype')]"/>
+            <field name="group" ref="health.group_health_admin"/>
+            <field name="perm_read" eval="True" />
+            <field name="perm_write" eval="True" />
+            <field name="perm_create" eval="True" />
+            <field name="perm_delete" eval="True" />
+        </record>
+    </data>
+</tryton>
