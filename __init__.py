@@ -4,6 +4,7 @@ from .models import (DiseaseNotification, TravelHistory, NotificationSymptom,
                      NotificationStateChange, LabResultType)
 from .reports import (RawDataReport, CaseCountReport, CaseCountWizard,
                       CaseCountStartModel)
+from .wizards import NotifyFromEncounter
 
 
 def register():
@@ -26,4 +27,5 @@ def register():
 
     Pool.register(
         CaseCountWizard,
+        NotifyFromEncounter,
         module='health_disease_notification', type_='wizard')

@@ -50,6 +50,31 @@
             <field name="sequence" eval="20" />
         </record>
 
+        <!-- Act_window to launch at form first -->
+        <record model="ir.action.act_window" id="actwin-notification_formfirst">
+            <field name="name">Disease Notification</field>
+            <field name="res_model">gnuhealth.disease_notification</field>
+            <field name="domain" eval="None"></field>
+        </record>
+        <record model="ir.action.act_window.view" id="actview_notification_formfirst">
+            <field name="view" ref="view_form-notification" />
+            <field name="act_window" ref="actwin-notification_formfirst" />
+            <field name="sequence" eval="10" />
+        </record>
+
+        <!-- Wizard that initialises Notification based on the encounter -->
+        <record model="ir.action.wizard" id="actwiz_notification_from_encounter">
+            <field name="name">Disease Notification</field>
+            <field name="wiz_name">gnuhealth.disease_notification.encounter_wizard</field>
+        </record>
+
+    <!-- Form action assigned to Encounters that launches Notification -->
+        <record model="ir.action.keyword" id="actkw_notification_from_encounter">
+            <field name="keyword">form_action</field>
+            <field name="model">gnuhealth.encounter,-1</field>
+            <field name="action" ref="actwiz_notification_from_encounter"/>
+        </record>
+
         <!--  Menu Item Links -->
         <menuitem action="actwin-notification"
             id="menu-actwin-notification" icon="health-notification"
