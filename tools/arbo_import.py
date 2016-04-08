@@ -323,7 +323,7 @@ def make_party_patient(row):
     if found:
         party.occupation = occupation
     elif oentry:
-        patient.critical_info = 'Occupation: {}'.format(oentry)
+        patient.general_info = 'Occupation: {}'.format(oentry)
 
     # Addresses
     addr = make_address(row)
@@ -359,9 +359,13 @@ def make_notification(row, patient):
     if notification.specimen_taken:
         try:
             specimen = make_object(row, 'specimen')
-            notification.specimens.append(specimen)
         except:
-            notification.specimen_taken = False
+            specimen = None
+        finally:
+            if specimen and specimen.date_taken:
+                notification.specimens.append(specimen)
+            else:
+                notification.specimen_taken = False
 
     if not notification.date_notified:
         if notification.date_received:

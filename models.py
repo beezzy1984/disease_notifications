@@ -11,8 +11,7 @@ from datetime import datetime, date
 
 ONLY_IF_ADMITTED = {'invisible': ~Eval('hospitalized', False)}
 ONLY_IF_LAB = {'invisible': ~Eval('specimen_taken', False)}
-ONLY_IF_DEAD = {'invisible': ~Eval('deceased', False),
-                'required': Eval('deceased', False)}
+ONLY_IF_DEAD = {'invisible': ~Eval('deceased', False)}
 
 REQD_IF_LAB = dict([('required', Eval('specimen_taken', False))] +
                    ONLY_IF_LAB.items())
