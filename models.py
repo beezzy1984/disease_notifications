@@ -152,6 +152,7 @@ class DiseaseNotification(ModelView, ModelSQL):
     state_changes = fields.One2Many(
         'gnuhealth.disease_notification.statechange', 'notification',
         'Status Changes', order=[('create_date', 'DESC')], readonly=True)
+    ir_received = fields.Boolean('IR Received')
     # medical_record_num = fields.Function(fields.Char('Medical Record Numbers'),
     #                                      'get_patient_field',
     #                                      searcher='search_patient_field')

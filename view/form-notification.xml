@@ -51,6 +51,8 @@
                     <field name="specimen_taken" />
                     <label name="hx_travel" />
                     <field name="hx_travel" />
+                    <label name="ir_received" />
+                    <field name="ir_received" />
                 </group>
             </group>
             <newline />
