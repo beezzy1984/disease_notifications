@@ -1,17 +1,39 @@
 
 from __future__ import unicode_literals
 import six
-import os, sys
+import sys
 import re
 import openpyxl
 from proteus import Model
-from datetime import datetime
+from datetime import date, datetime, timedelta
+import pytz
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
 
-datere =  re.compile('(\d{4})[-/](\d{2})[-/](\d{2})')
+
+def localtime(current):
+    '''returns a datetime object with local timezone. naive datetime
+    assumed to be in utc'''
+    if not current or not isinstance(current, (date, datetime)):
+        return None
+    tz = pytz.timezone('America/Jamaica')
+    if current.tzinfo is None:
+        # assume it's local. convert it to timezone aware
+        cdt = datetime(*current.timetuple()[:6], tzinfo=tz,
+                       microsecond=current.microsecond)
+    else:
+        cdt = current
+    return cdt.astimezone(pytz.UTC)
+
+
+def getdt(val):
+    localdt = localtime(val)
+    if localdt:
+        return True, localdt
+    else:
+        return False, localdt
 
 
 def get_model(model_name):
@@ -32,6 +54,13 @@ def isbool_true(val):
     return True, bool(val)
 
 
+def totype(val, type_conv):
+    if val:
+        return True, type_conv(val)
+    else:
+        return False, None
+
+
 def isnotyes(val):
     k, v = isyes(val)
     return (k, not v)
@@ -43,9 +72,14 @@ def selection_lookup(val, field, model):
     the stored value. It must match exactly (case insensitive)
     '''
     model_model = get_model(model)
-    fieldmap = dict([(y, x) for x, y in model_model._fields[field]['selection']])
-    if val in fieldmap:
-        return True, fieldmap[val]
+    fieldmap = dict([(y.lower(), x)
+                     for x, y in model_model._fields[field]['selection']])
+    if isinstance(val, six.string_types):
+        vallow = val.strip().lower()
+    else:
+        vallow = val
+    if vallow in fieldmap:
+        return True, fieldmap[vallow]
     else:
         return False, None
 
@@ -82,22 +116,27 @@ def po_lookup(row, col, parish):
 
 def make_altid(val, alt_id_type='other'):
     if val:
-        return True, [('create', [{'alternative_id_type': 'other', 'code': val,
-                      'comments': alt_id_type}])]
+        altid_model = get_model('gnuhealth.person_alternative_identification')
+        return altid_model(alternative_id_type='other', code=val,
+                           comments=alt_id_type)
     else:
-        return False, None
+        return None
 
 
 # COLMAP is a dict of dicts where the final values are the 1index from a row
 # in the spreadsheet
 COLMAP = {
     'party': {
-        'lastname': 5, 'firstname': 4, 'dob': 7,
+        '_model': 'party.party',
+        'lastname': 5, 'firstname': 4, 'dob': (getdt, 7),
         'sex': (selection_lookup, 6, 'sex', 'party.party'),
         'unidentified': (isnotyes, 69)  # always returns True; BUG
     },
-    'patient': {},
+    'patient': {
+        '_model': 'gnuhealth.patient'
+    },
     'address': {
+        '_model': 'party.address',
         'address_street_num': [8, 9], 'street': 10,
         'subdivision': (lookup, 13, 'country.subdivision', 'name',
                         [('country.code', '=', 'JM')]),
@@ -107,27 +146,35 @@ COLMAP = {
 
     },
     'contact': {
-        'type': 'phone', 'value': 14,
+        '_model': 'party.contact_mechanism',
+        'type': 'phone', 'value': (totype, 14, str),
     },
     'notification': {
+        '_model': 'gnuhealth.disease_notification',
         'diagnosis': (lookup, 'U06.9', 'gnuhealth.pathology', 'code'),
         'tracking_code': 2,
-        'reporting_facility_other': 16, 'date_notified': 17, 'date_onset': 19,
+        'reporting_facility_other': 16, 'date_notified': (getdt, 17),
+        'date_onset': (getdt, 19),
         'hx_travel': (isyes, 21), 'hospitalized': (isyes, 61),
         'deceased': (isyes, 66),
+        'ir_received': (isyes, 24),
         'specimen_taken': (isbool_true, 59),
         # 'specimens': [47, 48, 49, 50, 51, 52],
-        'status': 63,
-        'date_received': 18,
+        'status': (selection_lookup, 63, 'status',
+                   'gnuhealth.disease_notification'),
+        'date_received': (getdt, 18),
         'comments': ['Risk Factors:', 58, '\nOther Symptoms:', 55,
                      '\n Comments:\n', 67]
     },
     'specimen': {
-        'date_taken': 59,
-        'lab_test_type': 64,
+        '_model': 'gnuhealth.disease_notification.specimen',
+        'date_taken': (getdt, 59),
+        'lab_test_type': (selection_lookup, 64, 'lab_test_type',
+                          'gnuhealth.disease_notification.specimen'),
         'specimen_type': 'unknown',
         'lab_result_state': (selection_lookup, 65, 'lab_result_state',
                              'gnuhealth.disease_notification.specimen'),
+        'lab_sent_to': '[Unknown]',
         'lab_result': [68]
     }
 }
@@ -187,17 +234,6 @@ def resolve_val(row, index_val):
                             fn.func_name, repr(args), repr(val)))
 
 
-# def resolve_as_date(s):
-#     '''returns a datetime object made from s or None if it can't be converted'''
-#     if s and datere.match(s):
-#         date_parts = map(int, filter(None, datere.split(s.strip())))
-#         try:
-#             return datetime(*date_parts)
-#         except Exception, e:
-#             print('Cannot convert {} to date. Error was \n{}'.format(s, repr(e)))
-#     return None
-
-
 def make_object(row, map_key, initial_val=None):
     outdict = {}
     if initial_val:
@@ -206,165 +242,198 @@ def make_object(row, map_key, initial_val=None):
         except Exception, e:
             print('Cannot update dictionary with {}'.format(repr(e)))
     for key, index in COLMAP[map_key].items():
+        if key.startswith('_'):
+            continue
         try:
             val = resolve_val(row, index)
             outdict[key] = val
         except:
             pass
-    return outdict
+    model = get_model(COLMAP[map_key]['_model'])
+    return model(**outdict)
 
 
 def make_address(row):
     # creates a dict for inclusion in the create for party
-    parish_index = COLMAP['address']['subdivision']
     addr = make_object(row, 'address',
                        {'country': get_model('country.country')(89)})
-    if addr and not addr.get('subdivision', False):
+    if addr and not addr.subdivision:
+        parish_index = [COLMAP['address'][x] for x in
+                        ['district_community', 'post_office', 'subdivision']]
         try:
             subdiv = resolve_val(row, parish_index)
-            addr['desc'] = ' '.join(filter(None, [addr.get('desc'),
-                                                  'Parish', subdiv]))
         except:
-            pass
-    if addr and addr.get('subdivision') and not addr.get('post_office'):
-        found, po = po_lookup(row, 12, addr.get('subdivision'))
+            subdiv = None
+        addr.desc = ' '.join(filter(None, [addr.desc, subdiv]))
+        addr.post_office = None
+    if addr and addr.subdivision and not addr.post_office:
+        found, po = po_lookup(row, 12, addr.subdivision)
         if found:
-            addr['post_office'] = po
+            addr.post_office = po
+    if addr.district_community and (not addr.post_office or
+            (addr.district_community.post_office != addr.post_office)):
+        addr.district_community = None
+        if addr.subdivision:
+            po_index = [COLMAP['address'][x] for x in
+                        ['district_community', 'post_office']]
+            try:
+                poval = resolve_val(row, po_index)
+            except:
+                poval = None
+            addr.desc = ' '.join(filter(None, [addr.desc, poval]))
     return addr
 
 
 def make_party_patient(row):
     # search for or create party, i.e. create the dict for party + patient
-    party = make_object(row, 'party')
-    try:
-        party['name'] = "{lastname}, {firstname}".format(**party)
-    except KeyError:
-        party['name'] = ' '.join(filter(None, [party.get('firstname'),
-                                 party.get('lastname')]))
-    patient = {'name': party}
+    party = make_object(row, 'party', {'is_person': True, 'is_patient': True})
+    patient_model = get_model(COLMAP['patient']['_model'])
 
-    if party.get('dob', False):
-        lookupdom = [('dob', '=', party['dob'])]
+    if party.dob:
+        lookupdom = [('dob', '=', party.dob)]
     else:
         lookupdom = []
-    found, fparty = lookup('{name}'.format(**party),
+    found, fparty = lookup(party.name,
                            'party.party', extra_domain=lookupdom)
     if found:
         found, patient = lookup(fparty.id, 'gnuhealth.patient')
         if found:
             return True, patient
         else:
-            return True, {'name': fparty}
-    else:
-        if fparty and len(fparty) > 1:
-            print("multiple parties returned {}".format(
-                  '\n'.join([x.name for x in fparty])))
-            return False, fparty
+            return True, patient_model(name=fparty)
+    elif fparty and len(fparty) > 1:
+        print("multiple parties returned {}".format(
+              '\n'.join([x.name for x in fparty])))
+        return False, fparty
+
+    patient = patient_model(name=party)
 
     # let's setup the other stuff for the party
+    if not party.sex:
+        party.sex = 'u'
+
     # Alt ID
     alt_id = resolve_val(row, 69)
     if alt_id:
-        _, party['alternative_ids'] = make_altid(alt_id, 'medical_record')
+        party.alternative_ids.append(make_altid(alt_id, 'medical_record'))
 
     # Occupation:
     oentry = resolve_val(row, 15)
     found, occupation = lookup(oentry, 'gnuhealth.occupation')
     if found:
-        party['occupation'] = occupation
+        party.occupation = occupation
     elif oentry:
-        patient['critical_info'] = 'Occupation: {}'.format(oentry)
+        patient.critical_info = 'Occupation: {}'.format(oentry)
 
     # Addresses
     addr = make_address(row)
-    if len(addr) > 1:
-        party['addresses'] = [('create', [addr])]
+    if addr.subdivision:
+        if len(party.addresses) > 0:
+            party.addresses[0] = addr
+        else:
+            party.addresses.append(addr)
 
     # Contact mechanisms
     contact = make_object(row, 'contact')
-    if len(contact) > 1 and contact.get('value'):
-        party['contact_mechanisms'] = [('create', [contact])]
-
-    return True, {'name': party}
+    if contact and contact.value:
+        party.contact_mechanisms.append(contact)
+    return True, patient
 
 
 def make_notification(row, patient):
     # create disease notification object
-    notification = make_object(row, 'notification')
-    if notification:
-        notification['patient'] = patient
-        if notification.get('specimen_taken', False):
+    # notification_model = get_model('gnuhealth.disease_notification')
+    symptom_model = get_model('gnuhealth.disease_notification.symptom')
+    notification = make_object(row, 'notification', {'patient': patient})
+
+    for col in SYMPTOM_IDS:
+        yes = resolve_val(row, (isyes, col))
+        if yes:
+            s = symptom_model(pathology=SYMPTOM_IDS[col])
+            notification.symptoms.append(s)
+            if col == 33:  # fever R50.9
+                fever_date_onset = resolve_val(row, 34)
+                if fever_date_onset:
+                    s.date_onset = fever_date_onset
+
+    if notification.specimen_taken:
+        try:
             specimen = make_object(row, 'specimen')
-            notification['specimens'] = [('create', [specimen])]
-        symptoms = []
-        for col in SYMPTOM_IDS:
-            yes = resolve_val(row, (isyes, col))
-            if yes:
-                symptoms.append(
-                    {'pathology': SYMPTOM_IDS[col]}
-                )
-                if col == 33:  # fever R50.9
-                    fever_date_onset = resolve_val(row, 34)
-                    if fever_date_onset:
-                        symptoms[-1]['date_onset'] = fever_date_onset
-        notification['symptoms'] = [('create', symptoms)]
-        notification['patient'] = patient
+            notification.specimens.append(specimen)
+        except:
+            notification.specimen_taken = False
+
+    if not notification.date_notified:
+        if notification.date_received:
+            notification.date_notified = notification.date_received
+        else:
+            notification.date_notified = notification.create_date
     return notification
 
 
-def process_xlfile(filepath):
-    # open the file and get the current sheet
-    workbook = openpyxl.load_workbook(filepath)
+def setup_symptoms():
     pathology_model = get_model('gnuhealth.pathology')
-    notification_model = get_model('gnuhealth.disease_notification')
     symptoms = pathology_model.find(
         [('code', 'in', [y for x, y in SYMPTOM_MAP])])
     symptom_code_id = dict([(x.code, x.id) for x in symptoms])
     SYMPTOM_IDS.update([(x, symptom_code_id[y]) for x, y in SYMPTOM_MAP])
 
+
+def process_xlfile(filepath, limit=-1):
+    # open the file and get the current sheet
+    workbook = openpyxl.load_workbook(filepath)
+    notification_model_name = 'gnuhealth.disease_notification'
+
+    setup_symptoms()
     # on the first worksheet
     worksheet = workbook.worksheets[0]
     notifications = []
     bad_patient = []
     bad_notify = []
     good_notify = []
+    skipped = []
     tracking_field = COLMAP['notification']['tracking_code'] - 1
     # starting from the 2nd row:
-    i = 0
-    for row in worksheet.rows:
+    cnt = 0
+    for i, row in enumerate(worksheet.rows):
         # while worksheet.rows[i][1].value or worksheet.rows[i][5].value:
         # row = worksheet.rows[i]
         # check for notification using arbo number
+
         if i < 1:
-            i += 1
-            continue
-        tracking_code = row[tracking_field].value
-        found, notification = lookup(tracking_code,
-                                     notification_model.__name__,
-                                     'tracking_code')
-        if found or len(notification) > 1:
-            bad_notify.append(('existing', i+1))
             continue
 
+        if limit > 0 and cnt >= limit:
+            break
+
+        tracking_code = row[tracking_field].value
+        found, notification = lookup(tracking_code,
+                                     notification_model_name,
+                                     'tracking_code')
+        if found or len(notification) > 1:
+            skipped.append(('existing', i))
+            continue
+
+        cnt += 1
+        print('processing row {}, {}'.format(i, repr(resolve_val(row, 2))))
         try:
             good, patient = make_party_patient(row)
         except Exception, e:
             good = False
-            bad_patient.append(('error', i+1, e))
+            bad_patient.append(('error', i, e))
 
         if good:
             notification = make_notification(row, patient)
             try:
-                print('creating notification {tracking_code}'.format(**notification))
-                context = notification_model._config.context
-                notifx = notification_model._proxy.create(notification, context)
-                notifications.append(notifx)
-                good_notify.append(i+1)
+                patient.name.save()
+                patient.save()
+                notification.save()
+                notifications.append(notification)
+                good_notify.append(i)
             except Exception, e:
-                bad_notify.append(('error', i+1, e))
-        i += 1
+                bad_notify.append(('error', i, e, notification))
 
-    results = {'badn': bad_notify, 'badppl': bad_patient,
+    results = {'badn': bad_notify, 'badppl': bad_patient, 'skipped': skipped,
                'goodn': good_notify, 'notifications': notifications}
     return results
 
