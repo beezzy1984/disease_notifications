@@ -64,9 +64,14 @@ class RawDataReport(Report):
             ordered_symptoms[rec.id].update([(r, u'Yes') for r in my_yeses])
             if my_others:
                 other_symptoms[rec.id] = u', '.join(sorted(my_others))
+        # This value represents the number days from 0000-00-00 to 1900-01-02
+        # xldate = 693594
+        xldate = lambda val: val.toordinal() - 693594 if val else None
+        # 42449 is the xldate for March 20, 2016
         localcontext.update(
             ordered_symptoms=ordered_symptoms,
             symptom_list=symptoms,
+            xldate=xldate,
             other_symptoms=other_symptoms)
 
         return super(RawDataReport, cls).parse(report, records, data,

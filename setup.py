@@ -41,6 +41,7 @@ for key in ('depends', 'extras_depend', 'xml'):
 
 requires = [
     'trytond' + tryton_version,
+    'proteus' + tryton_version,
     'trytond_health_jamaica' + jmversion
 ]
 
@@ -56,7 +57,8 @@ setup(
     download_url='http://nhin.moh.gov.jm/ePAS',
     package_dir={'trytond.modules.' + name: '.'},
     packages=[
-        'trytond.modules.' + name
+        'trytond.modules.' + name,
+        'trytond.modules.{}.tools'.format(name)
     ],
 
     package_data={
