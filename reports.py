@@ -66,7 +66,8 @@ class RawDataReport(Report):
                 other_symptoms[rec.id] = u', '.join(sorted(my_others))
         # This value represents the number days from 0000-00-00 to 1900-01-02
         # xldate = 693594
-        xldate = lambda val: val.toordinal() - 693594 if val else None
+        # xldate = lambda val: val.toordinal() - 693594 if val else None
+        xldate = lambda val: val if val else None
         # 42449 is the xldate for March 20, 2016
         localcontext.update(
             ordered_symptoms=ordered_symptoms,
