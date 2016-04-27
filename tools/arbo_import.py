@@ -4,7 +4,7 @@ import six
 import sys
 import re
 import openpyxl
-from proteus import Model
+from proteus import Model, config as pconfig
 from datetime import date, datetime, timedelta
 import pytz
 try:
@@ -52,6 +52,12 @@ def isyes(val):
 
 def isbool_true(val):
     return True, bool(val)
+
+def tostr(val):
+    if val:
+        return True, unicode(val)
+    else:
+        return True, ''
 
 
 def totype(val, type_conv):
@@ -128,95 +134,90 @@ def make_altid(val, alt_id_type='other'):
 COLMAP = {
     'party': {
         '_model': 'party.party',
-        'lastname': 5, 'firstname': 4, 'dob': (getdt, 7),
+        'lastname': 4, 'firstname': 5, 'dob': (getdt, 8),
         'sex': (selection_lookup, 6, 'sex', 'party.party'),
-        'unidentified': (isnotyes, 69)  # always returns True; BUG
+        # 'unidentified': (isnotyes, 4),  # always returns True; BUG
+        'occupation': (lookup, 14, 'gnuhealth.occupation')
     },
     'patient': {
         '_model': 'gnuhealth.patient'
     },
     'address': {
         '_model': 'party.address',
-        'address_street_num': [8, 9], 'street': 10,
+        'address_street_num': (tostr, 9), 'street': (tostr, 10),
         'subdivision': (lookup, 13, 'country.subdivision', 'name',
                         [('country.code', '=', 'JM')]),
         'district_community': (lookup, 11, 'country.district_community'),
-        'post_office': (po_lookup, 12),
-        'desc': [12],
+        'post_office': (po_lookup, 12)
 
     },
-    'contact': {
-        '_model': 'party.contact_mechanism',
-        'type': 'phone', 'value': (totype, 14, str),
-    },
+    # 'contact': {
+    #     '_model': 'party.contact_mechanism',
+    #     'type': 'phone', 'value': (totype, 13, str),
+    # },
     'notification': {
         '_model': 'gnuhealth.disease_notification',
-        'diagnosis': (lookup, 'U06.9', 'gnuhealth.pathology', 'code'),
+        'diagnosis': (lookup, 55, 'gnuhealth.pathology', 'code'),
         'tracking_code': 2,
-        'reporting_facility_other': 16, 'date_notified': (getdt, 17),
-        'date_onset': (getdt, 19),
-        'hx_travel': (isyes, 21), 'hospitalized': (isyes, 61),
-        'deceased': (isyes, 66),
-        'ir_received': (isyes, 24),
-        'specimen_taken': (isbool_true, 59),
+        'reporting_facility_other': 15, 'date_notified': (getdt, 16),
+        'date_onset': (getdt, 17),
+        'hx_travel': (isyes, 19), 'hospitalized': (isyes, 54),
+        'deceased': (isyes, 59),
+        'specimen_taken': (isbool_true, 52),
         # 'specimens': [47, 48, 49, 50, 51, 52],
-        'status': (selection_lookup, 63, 'status',
+        'status': (selection_lookup, 56, 'status',
                    'gnuhealth.disease_notification'),
-        'date_received': (getdt, 18),
-        'comments': ['Risk Factors:', 58, '\nOther Symptoms:', 55,
-                     '\n Comments:\n', 67]
+        'comments': ['Risk Factors:', 51, '\nOther Symptoms:', 50,
+                     '\n Comments:\n', 60]
     },
     'specimen': {
         '_model': 'gnuhealth.disease_notification.specimen',
-        'date_taken': (getdt, 59),
-        'lab_test_type': (selection_lookup, 64, 'lab_test_type',
+        'date_taken': (getdt, 52),
+        'lab_test_type': (selection_lookup, 57, 'lab_test_type',
                           'gnuhealth.disease_notification.specimen'),
-        'specimen_type': 'unknown',
-        'lab_result_state': (selection_lookup, 65, 'lab_result_state',
-                             'gnuhealth.disease_notification.specimen'),
-        'lab_sent_to': '[Unknown]',
-        'lab_result': [68]
+        'specimen_type': (selection_lookup, 53),
+        'lab_result_state': (selection_lookup, 58, 'lab_result_state',
+                             'gnuhealth.disease_notification.specimen')
     }
 }
 
 SYMPTOM_MAP = [
-    (25, 'R19.7'),
-    (26, 'R53.1'),
-    (27, 'R29.5'),
-    (28, 'R29.7'),
-    (29, 'R60.2'),
-    (30, 'R52.3'),
-    (31, 'R52.4'),
-    (32, 'R11.1'),
-    (33, 'R50.9'),
-    (35, 'R05'),
-    (36, 'R06.0'),
-    (37, 'R06.2'),
-    (38, 'R07.4'),
-    (39, 'R60.0'),
-    (40, 'R56.0'),
-    (41, 'R07.0'),
-    (42, 'R21'),
-    (43, 'R68.6'),
-    (44, 'R68.7'),
-    (45, 'R51'),
-    (46, 'R53'),
-    (47, 'R17'),
-    (48, 'R29.1'),
-    (49, 'R40'),
-    (50, 'R40.1'),
-    (51, 'R26'),
-    (52, 'R04.2'),
-    (53, 'R58'),
-    (54, 'R04.0'),
-    (56, 'R63.0'),
-    (57, 'R51.1')
+    (20, 'R19.7'),
+    (21, 'R53.1'),
+    (22, 'R29.5'),
+    (23, 'R29.7'),
+    (24, 'R60.2'),
+    (25, 'R52.3'),
+    (26, 'R52.4'),
+    (27, 'R11.1'),
+    (28, 'R50.9'),
+    (29, 'R05'),
+    (30, 'R06.0'),
+    (31, 'R06.2'),
+    (32, 'R07.4'),
+    (33, 'R60.0'),
+    (34, 'R56.0'),
+    (35, 'R07.0'),
+    (36, 'R21'),
+    (37, 'R68.6'),
+    (38, 'R68.7'),
+    (39, 'R51'),
+    (40, 'R51.1'),
+    (41, 'R53'),
+    (42, 'R17'),
+    (43, 'R29.1'),
+    (44, 'R40'),
+    (45, 'R40.1'),
+    (46, 'R26'),
+    (47, 'R04.2'),
+    (48, 'R58'),
+    (49, 'R04.0'),
 ]
 SYMPTOM_IDS = {}
 
 
 def resolve_val(row, index_val):
-    if isinstance(index_val, six.string_types):
+    if isinstance(index_val, six.string_types + (bool, )):
         return index_val
     elif isinstance(index_val, (int, )):
         return row[index_val - 1].value
@@ -234,7 +235,7 @@ def resolve_val(row, index_val):
                             fn.func_name, repr(args), repr(val)))
 
 
-def make_object(row, map_key, initial_val=None):
+def make_object(row, map_key, initial_val=None, overrides=None):
     outdict = {}
     if initial_val:
         try:
@@ -249,14 +250,21 @@ def make_object(row, map_key, initial_val=None):
             outdict[key] = val
         except:
             pass
+    if overrides:
+        try:
+            outdict.update(overrides)
+        except Exception, e:
+            print('Cannot update dictionary with {} {}'.format(repr(overrides),
+                  repr(e)))
+    # print('outdict = {}'.format(repr(outdict)))
     model = get_model(COLMAP[map_key]['_model'])
     return model(**outdict)
 
 
 def make_address(row):
     # creates a dict for inclusion in the create for party
-    addr = make_object(row, 'address',
-                       {'country': get_model('country.country')(89)})
+
+    addr = make_object(row, 'address', {'country': 89})
     if addr and not addr.subdivision:
         parish_index = [COLMAP['address'][x] for x in
                         ['district_community', 'post_office', 'subdivision']]
@@ -286,7 +294,8 @@ def make_address(row):
 
 def make_party_patient(row):
     # search for or create party, i.e. create the dict for party + patient
-    party = make_object(row, 'party', {'is_person': True, 'is_patient': True})
+    party = make_object(row, 'party', {'is_person': True, 'is_patient': True,
+                                       'unidentified': True})
     patient_model = get_model(COLMAP['patient']['_model'])
 
     if party.dob:
@@ -313,16 +322,13 @@ def make_party_patient(row):
         party.sex = 'u'
 
     # Alt ID
-    alt_id = resolve_val(row, 69)
-    if alt_id:
-        party.alternative_ids.append(make_altid(alt_id, 'medical_record'))
+    # alt_id = resolve_val(row, 69)
+    # if alt_id:
+    #     party.alternative_ids.append(make_altid(alt_id, 'medical_record'))
 
     # Occupation:
-    oentry = resolve_val(row, 15)
-    found, occupation = lookup(oentry, 'gnuhealth.occupation')
-    if found:
-        party.occupation = occupation
-    elif oentry:
+    oentry = resolve_val(row, 14)
+    if not party.occupation:
         patient.general_info = 'Occupation: {}'.format(oentry)
 
     # Addresses
@@ -334,9 +340,9 @@ def make_party_patient(row):
             party.addresses.append(addr)
 
     # Contact mechanisms
-    contact = make_object(row, 'contact')
-    if contact and contact.value:
-        party.contact_mechanisms.append(contact)
+    # contact = make_object(row, 'contact')
+    # if contact and contact.value:
+    #     party.contact_mechanisms.append(contact)
     return True, patient
 
 
@@ -345,20 +351,21 @@ def make_notification(row, patient):
     # notification_model = get_model('gnuhealth.disease_notification')
     symptom_model = get_model('gnuhealth.disease_notification.symptom')
     notification = make_object(row, 'notification', {'patient': patient})
-
+    SMD = dict(SYMPTOM_MAP)
     for col in SYMPTOM_IDS:
         yes = resolve_val(row, (isyes, col))
         if yes:
             s = symptom_model(pathology=SYMPTOM_IDS[col])
             notification.symptoms.append(s)
-            if col == 33:  # fever R50.9
-                fever_date_onset = resolve_val(row, 34)
+            if SMD.get(col, '') == 'R50.9' and (col+1) not in SMD:
+                fever_date_onset = resolve_val(row, col+1)
                 if fever_date_onset:
                     s.date_onset = fever_date_onset
 
     if notification.specimen_taken:
         try:
-            specimen = make_object(row, 'specimen')
+            specimen = make_object(row, 'specimen', {'lab_sent_to': 'Unknown'},
+                                   overrides={'specimen_type': 'unknown'})
         except:
             specimen = None
         finally:
@@ -443,6 +450,10 @@ def process_xlfile(filepath, limit=-1):
 
 if __name__ == '__main__':
     filename = sys.argv[1]
+    tryton_conf = sys.argv[2]
+    if tryton_conf.startswith('http'):
+        pconfig.set_xmlrpc(tryton_conf)
+    
     if len(sys.argv) > 1:
         outfile = sys.argv[2]
     else:
