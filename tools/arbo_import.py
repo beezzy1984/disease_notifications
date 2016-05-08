@@ -382,6 +382,34 @@ def make_notification(row, patient):
     return notification
 
 
+def check_or_duplicate(existing, new_row):
+
+    if not isinstance(existing, (list, )):
+        existing = [existing]
+    notification_model = Model.get('gnuhealth.disease_notification')
+    _, new_patient = make_party_patient(new_row)
+    new_diagnosis = resolve_val(new_row, COLMAP['notification']['diagnosis'])
+    # new_code = resolve_val(new_row, COLMAP['notification']['tracking_code'])
+    # new_date = resolve_val(new_row, COLMAP['notification']['date_notified'])
+    tocopy = None
+    for n0 in existing:
+        if (new_patient == n0.patient and new_diagnosis != n0.diagnosis):
+            # same patient, different suspected case
+            tocopy = n0
+        else:
+            # genuine duplicate. not desired. nothing to copy
+            tocopy = None
+            break
+
+    if tocopy:
+        copied, = notification_model.duplicate([tocopy])
+        copied.diagnosis = new_diagnosis
+        copied.save()
+        return True, copied
+    else:
+        return False, None
+
+
 def setup_symptoms():
     pathology_model = get_model('gnuhealth.pathology')
     symptoms = pathology_model.find(
@@ -417,16 +445,23 @@ def process_xlfile(filepath, limit=-1):
         if limit > 0 and cnt >= limit:
             break
 
+        print('processing row {}, {}'.format(i, repr(resolve_val(row, 2))))
+
         tracking_code = row[tracking_field].value
         found, notification = lookup(tracking_code,
                                      notification_model_name,
                                      'tracking_code')
-        if found or len(notification) > 1:
-            skipped.append(('existing', i))
+
+        if found or (notification and len(notification) > 1):
+            copied, result = check_or_duplicate(notification, row)
+            if copied:
+                cnt += 1
+                good_notify.append(i)
+                notifications.append(result)
+            else:
+                skipped.append(('existing', i))
             continue
 
-        cnt += 1
-        print('processing row {}, {}'.format(i, repr(resolve_val(row, 2))))
         try:
             good, patient = make_party_patient(row)
         except Exception, e:
@@ -453,7 +488,7 @@ if __name__ == '__main__':
     tryton_conf = sys.argv[2]
     if tryton_conf.startswith('http'):
         pconfig.set_xmlrpc(tryton_conf)
-    
+
     if len(sys.argv) > 1:
         outfile = sys.argv[2]
     else:

@@ -2,6 +2,7 @@
 from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
+from sql import operators, Column
 from trytond.modules.health_jamaica.tryton_utils import (
     get_epi_week, replace_clause_column, epiweek_str
 )
@@ -169,6 +170,12 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
+
+    @classmethod
+    def order_puid(cls, tables):
+        table, _ = tables[None]
+        return [Column(table, 'patient')]
+        # not really a UPI/PUID sort, but good enough
 
     @classmethod
     def short_comment(cls, instances, name):
