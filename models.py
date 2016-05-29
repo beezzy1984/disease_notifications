@@ -2,6 +2,7 @@
 from trytond.model import ModelView, ModelSQL, fields, ModelSingleton
 from trytond.pyson import Eval, In, And, Bool
 from trytond.pool import Pool
+from trytond.transaction import Transaction
 from sql import operators, Column
 from trytond.modules.health_jamaica.tryton_utils import (
     get_epi_week, replace_clause_column, epiweek_str
@@ -143,7 +144,9 @@ class DiseaseNotification(ModelView, ModelSQL):
         'gnuhealth.disease_notification.travel', 'notification',
         'Places visited',
         states={'invisible': ~Eval('hx_travel', False)})
-    age = fields.Function(fields.Char('Age', size=8), 'get_patient_field')
+    age = fields.Function(fields.Char('Age', size=8,
+                                      help='age at date of onset'),
+                          'get_patient_age')
     sex = fields.Function(fields.Selection(SEX_OPTIONS, 'Sex'),
                           'get_patient_field',
                           searcher='search_patient_field')
@@ -170,6 +173,30 @@ class DiseaseNotification(ModelView, ModelSQL):
     @classmethod
     def get_patient_field(cls, instances, name):
         return dict([(x.id, getattr(x.patient, name)) for x in instances])
+
+    @classmethod
+    def get_patient_age(cls, instances, name):
+        '''
+        Uses the age function in the database to calculate the age at 
+        the date specified.
+        :param: instance_refs - a list of tuples with (id, ref_date)
+        '''
+        c = Transaction().cursor
+        tbl = cls.__table__()
+        qry = "\n".join(
+            ["SET intervalstyle TO 'iso_8601';",
+             "SELECT a.id as id, btrim(lower("
+             "regexp_replace(AGE(a.date_onset, c.dob)::varchar, "
+             "'([YMD])', '\\1 ', 'g')), 'p ')  as showage ",
+             "from " + str(tbl) + " as a ",
+             " inner join gnuhealth_patient as b on a.patient=b.id",
+             " inner join party_party c on b.name=c.id"
+             " where a.id in %s ;"])
+        qry_parm = tuple(map(int, instances))
+        c.execute(qry, (qry_parm, ))
+        outx = c.fetchall()
+        outd = dict([x for x in outx])
+        return outd
 
     @classmethod
     def order_puid(cls, tables):
