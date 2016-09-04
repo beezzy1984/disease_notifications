@@ -214,9 +214,10 @@ class DiseaseNotification(ModelView, ModelSQL):
     def search_patient_field(cls, field_name, clause):
         return replace_clause_column(clause, 'patient.%s' % field_name)
 
-    @classmethod
-    def get_rec_name(cls, records, name):
-        return dict([(x.id, x.name) for x in records])
+    _rec_name = 'name'
+    # @classmethod
+    # def get_rec_name(cls, records, name):
+    #     return dict([(x.id, x.name) for x in records])
 
     @classmethod
     def search_rec_name(cls, field_name, clause):
@@ -293,10 +294,10 @@ class DiseaseNotification(ModelView, ModelSQL):
     def write(cls, records, values, *args):
         '''create a NotificationStateChange when the status changes'''
         healthprof = DiseaseNotification.default_healthprof()
+        to_make = []
         irecs = iter((records, values) + args)
         for recs, vals in zip(irecs, irecs):
             newstate = vals.get('status', False)
-            to_make = []
             if newstate:
                 for rec in recs:
                     if rec.status != newstate:
@@ -306,8 +307,10 @@ class DiseaseNotification(ModelView, ModelSQL):
                                         'healthprof': healthprof})
         return_val = super(DiseaseNotification, cls).write(records, values,
                                                            *args)
-        nsc = Pool().get('gnuhealth.disease_notification.statechange')
-        nsc.create(to_make)
+        # nsc = Notification State Change
+        if to_make:
+            nsc = Pool().get('gnuhealth.disease_notification.statechange')
+            nsc.create(to_make)
         return return_val
 
     @classmethod
@@ -501,13 +504,7 @@ class NotificationStateChange(ModelSQL, ModelView):
     creator = fields.Function(fields.Char('Changed by'), 'get_creator_name')
 
     def get_creator_name(self, name):
-        pool = Pool()
-        Party = pool.get('party.party')
-        persons = Party.search([('internal_user', '=', self.create_uid)])
-        if persons:
-            return persons[0].name
-        else:
-            return self.create_uid.name
+        return self.healthprof.name.name
 
     @staticmethod
     def default_change_date():
