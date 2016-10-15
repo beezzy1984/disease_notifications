@@ -43,5 +43,20 @@
         <menuitem id="menu_weekly_case_count" name="Notification Count By Week"
             parent="menu_surveillance" sequence="40" icon="gnuhealth-list"
             action="action_counts_by_epiweek_wizard" />
+        <!-- Disease Notifications Report -->
+        <record model="ir.action.report" id="disease_notifications_report_patient">
+            <field name="name">Disease Notifications Report</field>
+            <field name="report_name">gnuhealth.disease_notifications.report</field>
+            <field name="model">gnuhealth.disease_notification</field>
+            <field name="active" eval="True" />
+            <field name="report">health_disease_notification/report/disease_notifications_report.odt</field>
+            <field name="template_extension">odt</field>
+            <field name="extension"></field>
+        </record>
+        <record model="ir.action.keyword" id="disease_notifications_facesheet">
+            <field name="keyword">form_print</field>
+            <field name="model">gnuhealth.disease_notification,-1</field>
+            <field name="action" ref="disease_notifications_report_patient"/>
+        </record>
     </data>
 </tryton>
