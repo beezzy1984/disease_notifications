@@ -193,3 +193,7 @@ class CaseCountReport(Report):
 
         return super(CaseCountReport, cls).parse(report, records, data,
                                                  localcontext)
+
+class Notifications(Report):
+    """Definition of class for custom report"""
+    __name__ = 'gnuhealth.disease_notifications.report'
