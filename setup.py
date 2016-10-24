@@ -58,6 +58,7 @@ setup(
     package_dir={'trytond.modules.' + name: '.'},
     packages=[
         'trytond.modules.' + name,
+        'trytond.modules.' + name + '.tests',
         'trytond.modules.{}.tools'.format(name)
     ],
 
@@ -87,7 +88,7 @@ setup(
     entry_points="""
     [trytond.modules]
     %(name)s = trytond.modules.%(name)s
-    """ % {'name': name}
-    # test_suite='tests',
-    # test_loader='trytond.test_loader:Loader',
+    """ % {'name': name},
+    test_suite='tests',
+    test_loader='trytond.test_loader:Loader',
 )
