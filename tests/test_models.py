@@ -7,8 +7,8 @@ import doctest
 import unittest
 import coverage
 from datetime import (datetime, timedelta)
-from trytond.tests.test_tryton import (test_view, test_depends, suite,
-                                       install_module, POOL, DB_NAME, USER,
+from trytond.tests.test_tryton import (test_view, test_depends, install_module,
+                                       POOL, DB_NAME, USER,
                                        CONTEXT, test_view, test_depends,
                                        doctest_setup, doctest_teardown)
 # from trytond.pool import Pool
@@ -30,7 +30,7 @@ if os.path.isdir(DIR):
 
 COV = coverage.Coverage()
 
-CONFIG = set_up_datebase(database_name='shc_maypen')
+CONFIG = set_up_datebase(database_name='test_memory')
 
 CONFIG.pool.test = True
 
@@ -51,89 +51,71 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
     """Test HealthDiseaseNotification module."""
 
     def setUp(self):
+        COV.start()
         pool = POOL
-        install_module('ir')
-        install_module('res')
-        install_module('currency')
-        install_module('company')
-        install_module('product')
-        install_module('country')
-        install_module('party')
-        install_module('country_jamaica')
-        install_module('health')
-        install_module('health_encounter')
-        install_module('health_jamaica')
-        install_module('health_jamaica_sync')
         install_module('health_disease_notification')
         self.user = pool.get('res.user')
+        self.account = pool.get('account.account')
+        self.company = pool.get('company.company')
         self.party = pool.get('party.party')
+        self.acc_type = pool.get('account.account.type')
         self.patient = pool.get('gnuhealth.patient')
         self.notification = pool.get('gnuhealth.disease_notification')
         self.healthprof = pool.get('gnuhealth.healthprofessional')
+        COV.stop()
+        COV.save()
+        COV.html_report()
 
     def test_views(self):
         """Test views."""
+        COV.start()
         test_view('health_disease_notification')
+        COV.stop()
+        COV.save()
+        COV.html_report()
 
     def test_depends(self):
         """Test depends."""
+        COV.start()
         test_depends()
+        COV.stop()
+        COV.save()
+        COV.html_report()
 
     def test_notification_get_patient_age(self):
         """Tests if get_patient_age returns a value for age"""
-
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            party = self.party.create([{'lastname':'name', 
-                                        'firstname':'name',
-                                        'is_healthprof':True, 
-                                        'is_person':True,
-                                        'name':'name', 
-                                        'sex':'m'
-                                       }])
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient = self.party.create([{'lastname':'name', 
-                                                'firstname':'name',
-                                                'is_patient':True, 
-                                                'is_person':True,
-                                                'name':'name', 
-                                                'sex':'m'
-                                               }])
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
-            healthprof = self.healthprof.create([{'name':party[0].id, 
-                                                  'active':True
-                                                 }])
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
 
-            patient = self.patient.create([{'name':party_patient[0].id
-                                           }])
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
 
             notification = self.notification.create([{'date_notified':datetime.now(),
                                                       'name':'Code',
-                                                      'patient':patient[0].id,
+                                                      'patient':patient.id,
                                                       'status':'waiting',
-                                                      'healthprof':healthprof[0].id}])
+                                                      'healthprof':healthprof.id}])
 
             self.assertFalse(notification[0].get_patient_age is None)
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
     def test_notification_age_not_none(self):
         """Tests if get_patient_age returns a value for age"""
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            party, = self.party.create([{'lastname':'name', 
-                                         'firstname':'name',
-                                         'is_healthprof':True, 
-                                         'is_person':True,
-                                         'name':'name', 
-                                         'sex':'m'
-                                        }])
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient, = self.party.create([{'lastname':'name', 
-                                                 'firstname':'name',
-                                                 'is_patient':True, 
-                                                 'is_person':True,
-                                                 'name':'name', 
-                                                 'sex':'m',
-                                                 'dob':'2011-09-30'
-                                                }])
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
             healthprof, = self.healthprof.create([{'name':party.id, 
                                                    'active':True
@@ -151,26 +133,18 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             age = notification.get_patient_age([notification.id], party_patient.lastname)
 
             self.assertFalse(age is None)
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
     def test_notification_age_none(self):
         """Tests if get_patient_age returns a value for age"""
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            party, = self.party.create([{'lastname':'name', 
-                                         'firstname':'name',
-                                         'is_healthprof':True, 
-                                         'is_person':True,
-                                         'name':'name', 
-                                         'sex':'m'
-                                        }])
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient, = self.party.create([{'lastname':'name', 
-                                                 'firstname':'name',
-                                                 'is_patient':True, 
-                                                 'is_person':True,
-                                                 'name':'name', 
-                                                 'sex':'m',
-                                                }])
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
             healthprof, = self.healthprof.create([{'name':party, 
                                                    'active':True
@@ -189,6 +163,9 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             # import pdb; pdb.set_trace()
             for value in age.values():
                 self.assertFalse(value is not None)
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
 class NotificationStateChangeTestCase(unittest.TestCase):
     """docstring for NotificationStateChangeTest"unittest.TestCase"""
@@ -196,6 +173,7 @@ class NotificationStateChangeTestCase(unittest.TestCase):
     def setUp(self):
         pool = POOL
         self.party = pool.get('party.party')
+        self.account = pool.get('account.account')
         self.patient = pool.get('gnuhealth.patient')
         self.notification = pool.get('gnuhealth.disease_notification')
         self.healthprof = pool.get('gnuhealth.healthprofessional')
@@ -208,28 +186,16 @@ class NotificationStateChangeTestCase(unittest.TestCase):
            is always the current date
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
-            party, = self.party.create([{'lastname':'name', 
-                                         'firstname':'name',
-                                         'is_healthprof':True, 
-                                         'is_person':True,
-                                         'name':'name', 
-                                         'sex':'m'
-                                        }])
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient, = self.party.create([{'lastname':'name',
-                                                 'firstname':'name',
-                                                 'is_patient':True,
-                                                 'is_person':True,
-                                                 'name':'name', 
-                                                 'sex':'m',
-                                                }])
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
             healthprof, = self.healthprof.create([{'name':party, 
                                                    'active':True
                                                   }])
 
-            patient, = self.patient.create([{'name':party_patient
-                                            }])
+            patient, = self.patient.create([{'name':party_patient}])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -237,7 +203,6 @@ class NotificationStateChangeTestCase(unittest.TestCase):
                                                        'status':'waiting',
                                                        'healthprof':healthprof}])
 
-            COV.start()
             change_date = str(self.notification_state.create([{'orig_state':'waiting',
                                                                'target_state':'suspected',
                                                                'notification':notification
@@ -260,43 +225,98 @@ class NotificationStateChangeTestCase(unittest.TestCase):
            Test to make sure gnuhealth.disease_notification.statechange
            change_date is never passed the current time
         """
-        model = Model.get('gnuhealth.disease_notification.statechange')
-        model = model()
-        COV.start()
-        self.assertFalse(model.change_date > datetime.now() + timedelta(seconds=1))
-        COV.stop()
-        COV.save()
-        COV.html_report()
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof}])
+            notification_state, = self.notification_state.create(
+                [{'notification': notification,
+                  'healthprof': healthprof,
+                  'target_state':'waiting'
+                 }])
+            self.assertFalse(notification_state.change_date > 
+                             datetime.now() + timedelta(seconds=1))
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
     def test_default_change_date_great(self):
         """
            Test to make sure gnuhealth.disease_notification.statechange
            change_date is never passed the current time
         """
-        model = Model.get('gnuhealth.disease_notification.statechange')
-        model = model()
-        COV.start()
-        self.assertFalse(model.change_date < datetime.now() + timedelta(seconds=-1))
-        COV.stop()
-        COV.save()
-        COV.html_report()
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof}])
+            notification_state, = self.notification_state.create(
+                [{'notification': notification,
+                  'healthprof': healthprof,
+                  'target_state':'waiting'
+                 }])
+            self.assertFalse(notification_state.change_date < 
+                             datetime.now() + timedelta(seconds=-1))
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
     def test_health_prof_name_is_string(self):
         """
            Testing for string in gnuhealth.disease_notification.statechange
            health professional
         """
-        ex_user = create_user('name', 'lon', '123', 'group_doctors')
-        party = create_party('first_name', 'last_name', ex_user, 'male')
-        health_professional = create_health_professional(party)
-        model = Model.get('gnuhealth.disease_notification.statechange')
-        model = model()
-        COV.start()
-        model.healthprof = health_professional
-        self.assertTrue(model.healthprof.name.name, type(str))
-        COV.stop()
-        COV.save()
-        COV.html_report()
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof}])
+            notification_state, = self.notification_state.create(
+                [{'notification': notification,
+                  'healthprof': healthprof,
+                  'target_state':'waiting'
+                 }])
+            self.assertTrue(notification_state.healthprof.name.name, type(str))
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
 
 def suite():
