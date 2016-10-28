@@ -86,16 +86,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if get_patient_age returns a value for age"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -112,16 +106,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if an new notification is always active"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -138,16 +126,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if after state has been changed notification.active=True"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -167,16 +149,12 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
+
+            patient, = self.patient.search([('id', '=', '1')])
 
             party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -196,14 +174,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
-
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
             party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True}])
-
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -227,10 +201,8 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True}])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
             try:
                 self.notification.create(
@@ -255,9 +227,8 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             try:
                 self.notification.create(
@@ -286,15 +257,11 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
-            patient, = self.patient.create([{'name':party_patient}])
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            patient, = self.patient.search([('id', '=', '1')])
 
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
             try:
                 self.notification.create(
                     [{'date_notified':datetime.now(),
@@ -321,15 +288,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
 
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
             try:
                 self.notification.create(
                     [{'name':'Code',
@@ -378,16 +340,11 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if value in status_display is in NOTIFICATION_STATES list"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
+            patient, = self.patient.search([('id', '=', '1')])
 
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -418,16 +375,11 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if notification diagnosis is type gnuhealth.pathology"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+            patient, = self.patient.search([('id', '=', '1')])
 
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
 
             diagnosis, = self.pathology.search([('code', '=', 'A00')])
 
@@ -445,16 +397,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if notification diagnosis is type gnuhealth.pathology"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis = "self.pathology.search([('code', '=', 'A00')])"
 
@@ -484,16 +430,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if notification diagnosis_confirmed is type gnuhealth.pathology"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis, = self.pathology.search([('code', '=', 'A00')])
 
@@ -511,16 +451,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if notification diagnosis_confirmed is type gnuhealth.pathology"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis = "self.pathology.search([('code', '=', 'A00')])"
 
@@ -546,35 +480,47 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             COV.save()
             COV.html_report()
 
-    def test_symptoms_type(self):
+    def test_symptoms_with_wrong_type(self):
         """
            Tests if notification symptom is type 
            gnuhealth.disease_notification.symptom
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis, = self.pathology.search([('code', '=', 'R46')])
 
-            symptom, = self.symptom.create([{}])
-
-            self.assertTrue(self.notification.create([{'date_notified':datetime.now(),
+            notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
                                                        'patient':patient.id,
                                                        'status':'waiting',
                                                        'healthprof':healthprof.id,
-                                                       'diagnosis_confirmed': diagnosis,
-                                                       'symptoms': symptom}]))
+                                                       'diagnosis_confirmed': diagnosis}])
+
+            symptom = self.symptom.create([{'pathology':diagnosis.id,
+                                            'name': notification.id}])
+            try:
+                self.notification.create([{'date_notified':datetime.now(),
+                                           'name':'Cod',
+                                           'patient':patient.id,
+                                           'status':'waiting',
+                                           'healthprof':healthprof.id,
+                                           'diagnosis_confirmed': diagnosis.id,
+                                           'symptoms': symptom}])
+            except ValueError:
+                pass
+            except UserError:
+                pass
+            except KeyError:
+                pass
+            else:
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
             COV.stop()
             COV.save()
             COV.html_report()
@@ -586,16 +532,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis = "self.pathology.search([('code', '=', 'A00')])"
 
@@ -626,17 +566,10 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         """Tests if notification encounter is type gnuhealth.encounter"""
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-
-            healthprof, = self.healthprof.create([{'name':party.id, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient.id
-                                            }])
+            patient, = self.patient.search([('id', '=', '1')])
 
             diagnosis = "self.pathology.search([('code', '=', 'A00')])"
 
@@ -662,12 +595,12 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             COV.stop()
             COV.save()
             COV.html_report()
+
 class NotificationStateChangeTestCase(unittest.TestCase):
     """docstring for NotificationStateChangeTest"unittest.TestCase"""
 
     def setUp(self):
         pool = POOL
-        self.party = pool.get('party.party')
         self.account = pool.get('account.account')
         self.patient = pool.get('gnuhealth.patient')
         self.notification = pool.get('gnuhealth.disease_notification')
@@ -682,15 +615,10 @@ class NotificationStateChangeTestCase(unittest.TestCase):
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -722,15 +650,10 @@ class NotificationStateChangeTestCase(unittest.TestCase):
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -755,15 +678,10 @@ class NotificationStateChangeTestCase(unittest.TestCase):
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -788,15 +706,10 @@ class NotificationStateChangeTestCase(unittest.TestCase):
         """
         with Transaction().start(DB_NAME, USER, context=CONTEXT):
             COV.start()
-            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+            
+            healthprof, = self.healthprof.search([('id', '=', '1')])
 
-            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
-
-            healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
-
-            patient, = self.patient.create([{'name':party_patient}])
+            patient, = self.patient.search([('id', '=', '1')])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
