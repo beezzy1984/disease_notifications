@@ -3,7 +3,7 @@
 
 import os
 import sys
-#import doctest
+import doctest
 import unittest
 from datetime import (datetime, timedelta)
 import coverage
@@ -769,6 +769,12 @@ def suite():
     
     suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
         GnuHealthSequencesTestCase))
+
+    suite.addTests(doctest.DocFileSuite('test_models.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
     return suite
 
 if __name__ == '__main__':
