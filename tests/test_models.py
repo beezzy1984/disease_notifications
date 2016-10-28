@@ -3,21 +3,24 @@
 
 import os
 import sys
-import doctest
+#import doctest
 import unittest
-import coverage
 from datetime import (datetime, timedelta)
+import coverage
 from trytond.tests.test_tryton import (test_view, test_depends, install_module,
                                        POOL, DB_NAME, USER,
-                                       CONTEXT, test_view, test_depends,
-                                       doctest_setup, doctest_teardown)
-# from trytond.pool import Pool
+                                       CONTEXT)
+                                      # doctest_setup, doctest_teardown)
 import trytond.tests.test_tryton
 from trytond.transaction import Transaction
-from .test_utils import (create_party, create_health_professional,
-                         create_user)
+from trytond.exceptions import UserError #, UserWarning
+# from trytond.pool import Pool
+from psycopg2 import ProgrammingError
+# from .test_utils import (create_party, create_health_professional,
+#                          create_user)
 from .database_config import set_up_datebase
-from proteus import Model
+
+# from proteus import Model
 
 
 
@@ -34,19 +37,6 @@ CONFIG = set_up_datebase(database_name='test_memory')
 
 CONFIG.pool.test = True
 
-class GnuHealthSequencesTestCase(unittest.TestCase):
-    """Test class for """
-
-    def test_install(self):
-        """Testing if pool works"""
-
-        COV.start()
-        model = POOL.get('ir.module.module')
-        self.assertTrue(model, type(object))
-        COV.stop()
-        COV.save()
-        COV.html_report()
-
 class HealthDiseaseNotificationTestCase(unittest.TestCase):
     """Test HealthDiseaseNotification module."""
 
@@ -60,8 +50,18 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
         self.party = pool.get('party.party')
         self.acc_type = pool.get('account.account.type')
         self.patient = pool.get('gnuhealth.patient')
+        self.pathology = pool.get('gnuhealth.pathology')
         self.notification = pool.get('gnuhealth.disease_notification')
         self.healthprof = pool.get('gnuhealth.healthprofessional')
+        self.symptom = pool.get('gnuhealth.disease_notification.symptom')
+        self.encounter = pool.get('gnuhealth.encounter')
+        self.specimens = pool.get('gnuhealth.disease_notification.specimen')
+        self.hospital = pool.get('gnuhealth.institution')
+        self.risk_factors = pool.get('gnuhealth.disease_notification.risk_disease')
+        self.hx_locations = pool.get('gnuhealth.disease_notification.travel')
+        self.state_changes = pool.get('gnuhealth.disease_notification.statechange')
+        self.appointment = pool.get('gnuhealth.appointment')
+        self.specialty = pool.get('gnuhealth.specialty')
         COV.stop()
         COV.save()
         COV.html_report()
@@ -97,13 +97,67 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             patient, = self.patient.create([{'name':party_patient.id
                                             }])
 
-            notification = self.notification.create([{'date_notified':datetime.now(),
-                                                      'name':'Code',
-                                                      'patient':patient.id,
-                                                      'status':'waiting',
-                                                      'healthprof':healthprof.id}])
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id}])
 
-            self.assertFalse(notification[0].get_patient_age is None)
+            self.assertFalse(notification.get_patient_age is None)
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_new_notification_is_active(self):
+        """Tests if an new notification is always active"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id}])
+
+            self.assertEqual(notification.active, True)
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_after_state_changed_notification_is_active(self):
+        """Tests if after state has been changed notification.active=True"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id}])
+
+            notification.state = 'suspected'
+
+            self.assertEqual(notification.active, True)
             COV.stop()
             COV.save()
             COV.html_report()
@@ -147,11 +201,9 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
 
             healthprof, = self.healthprof.create([{'name':party, 
-                                                   'active':True
-                                                  }])
+                                                   'active':True}])
 
-            patient, = self.patient.create([{'name':party_patient
-                                            }])
+            patient, = self.patient.create([{'name':party_patient}])
 
             notification, = self.notification.create([{'date_notified':datetime.now(),
                                                        'name':'Code',
@@ -167,6 +219,449 @@ class HealthDiseaseNotificationTestCase(unittest.TestCase):
             COV.save()
             COV.html_report()
 
+    def test_patient_is_required(self):
+        """
+           Tests to make sure patient always has to be attached to a 
+           new disease notification
+        """
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True}])
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'status':'waiting',
+                      'healthprof':healthprof}])
+            except UserError:
+                pass
+            else:
+                msg = 'Did not see UserError for patient required in notification'
+                self.fail(msg)
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_health_prof_is_required(self):
+        """
+           Tests to make sure health professional always has to be attached to a 
+           new disease notification
+        """
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient,
+                      'status':'waiting'}])
+            except KeyError:
+                pass
+            except UserError:
+                pass
+            else:
+                msg = ['Did not see UserError or KeyError for health', 
+                       'professional required in notification']
+
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_status_is_required(self):
+        """
+           Tests to make sure a status always has to be attached to a 
+           new disease notification
+        """
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True
+                                                  }])
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient,
+                      'healthprof': healthprof}])
+            except KeyError:
+                pass
+            except UserError:
+                pass
+            else:
+                msg = ['Did not see UserError or KeyError for status', 
+                       'required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_date_notified_is_required(self):
+        """
+           Tests to make sure a date_notified always has to be attached to a 
+           new disease notification
+        """
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            patient, = self.patient.create([{'name':party_patient}])
+
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party, 
+                                                   'active':True
+                                                  }])
+            try:
+                self.notification.create(
+                    [{'name':'Code',
+                      'patient':patient,
+                      'healthprof': healthprof,
+                      'status':'waiting'}])
+            except KeyError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else:
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_data_required_notification(self):
+        """
+           Tests to make sure a data always has to be attached to a 
+           new disease notification
+        """
+
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            try:
+                self.notification.create([{}])
+            except KeyError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else:
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_status_display_is_in_list(self):
+        """Tests if value in status_display is in NOTIFICATION_STATES list"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            notification, = self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id}])
+
+            notification.state = 'suspected'
+            from .. models import NOTIFICATION_STATES
+            def check_list():
+                """
+                   Check for notification status_display in 
+                   NOTIFICATION_STATES list
+                """
+                for state in NOTIFICATION_STATES:
+                    if notification.status_display in state:
+                        return True
+
+                return False
+
+            self.assertTrue(check_list())
+
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_diagnosis_type(self):
+        """Tests if notification diagnosis is type gnuhealth.pathology"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis, = self.pathology.search([('code', '=', 'A00')])
+
+            self.assertTrue(self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id,
+                                                       'diagnosis': diagnosis}]))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_diagnosis_with_wrong_type(self):
+        """Tests if notification diagnosis is type gnuhealth.pathology"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis = "self.pathology.search([('code', '=', 'A00')])"
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient.id,
+                      'status':'waiting',
+                      'healthprof':healthprof.id,
+                      'diagnosis': diagnosis}])
+            except ValueError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else: 
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_diagnosis_confirmed_type(self):
+        """Tests if notification diagnosis_confirmed is type gnuhealth.pathology"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis, = self.pathology.search([('code', '=', 'A00')])
+
+            self.assertTrue(self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id,
+                                                       'diagnosis_confirmed': diagnosis}]))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_diagnosis_confirmed_with_wrong_type(self):
+        """Tests if notification diagnosis_confirmed is type gnuhealth.pathology"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis = "self.pathology.search([('code', '=', 'A00')])"
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient.id,
+                      'status':'waiting',
+                      'healthprof':healthprof.id,
+                      'diagnosis_confirmed': diagnosis}])
+            except ValueError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else: 
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_symptoms_type(self):
+        """
+           Tests if notification symptom is type 
+           gnuhealth.disease_notification.symptom
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis, = self.pathology.search([('code', '=', 'R46')])
+
+            symptom, = self.symptom.create([{}])
+
+            self.assertTrue(self.notification.create([{'date_notified':datetime.now(),
+                                                       'name':'Code',
+                                                       'patient':patient.id,
+                                                       'status':'waiting',
+                                                       'healthprof':healthprof.id,
+                                                       'diagnosis_confirmed': diagnosis,
+                                                       'symptoms': symptom}]))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_symptoms_with_wrong_type(self):
+        """
+           Tests if notification diagnosis_confirmed is type 
+           gnuhealth.disease_notification.symptom
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis = "self.pathology.search([('code', '=', 'A00')])"
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient.id,
+                      'status':'waiting',
+                      'healthprof':healthprof.id,
+                      'diagnosis_confirmed': diagnosis,
+                      'symptoms':diagnosis}])
+            except ValueError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else: 
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_encounter_with_wrong_type(self):
+        """Tests if notification encounter is type gnuhealth.encounter"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            party, = self.party.search([('code', '=', 'HEALTH-PERSON-TEST')])
+
+            party_patient, = self.party.search([('code', '=', 'PATIENT-TEST')])
+
+
+            healthprof, = self.healthprof.create([{'name':party.id, 
+                                                   'active':True
+                                                  }])
+
+            patient, = self.patient.create([{'name':party_patient.id
+                                            }])
+
+            diagnosis = "self.pathology.search([('code', '=', 'A00')])"
+
+            try:
+                self.notification.create(
+                    [{'date_notified':datetime.now(),
+                      'name':'Code',
+                      'patient':patient.id,
+                      'status':'waiting',
+                      'healthprof':healthprof.id,
+                      'diagnosis_confirmed': diagnosis,
+                      'encounter':diagnosis}])
+            except ValueError:
+                pass
+            except UserError:
+                pass
+            except ProgrammingError:
+                pass
+            else: 
+                msg = ['Did not see UserError, KeyError or ProgrammingError for',
+                       'status required in notification']
+                self.fail(' '.join(msg))
+            COV.stop()
+            COV.save()
+            COV.html_report()
 class NotificationStateChangeTestCase(unittest.TestCase):
     """docstring for NotificationStateChangeTest"unittest.TestCase"""
 
@@ -318,6 +813,36 @@ class NotificationStateChangeTestCase(unittest.TestCase):
             COV.save()
             COV.html_report()
 
+class GnuHealthSequencesTestCase(unittest.TestCase):
+    """Test class for """
+    def setUp(self):
+        pool = POOL
+        self.health_sequence = pool.get('gnuhealth.sequences')
+        self.notification = pool.get('gnuhealth.disease_notification')
+
+    def test_type(self):
+        """Testing if pool works"""
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            health_sequence, = self.health_sequence.create([{}])
+            self.assertTrue(health_sequence, type(self.health_sequence))
+            COV.stop()
+            COV.save()
+            COV.html_report()
+
+    def test_notification_sequence_type(self):
+        """
+            Testinf to make sure sequence notification type is of
+            disease notification object
+        """
+        with Transaction().start(DB_NAME, USER, context=CONTEXT):
+            COV.start()
+            health_sequence, = self.health_sequence.create([{}])
+            self.assertTrue(health_sequence.notification_sequence, 
+                            type(self.notification))
+            COV.stop()
+            COV.save()
+            COV.html_report()
 
 def suite():
     """Adding test cases to suite of tests in tryton"""
