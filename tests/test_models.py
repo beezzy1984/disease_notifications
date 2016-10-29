@@ -761,14 +761,15 @@ def suite():
     """Adding test cases to suite of tests in tryton"""
 
     suite = trytond.tests.test_tryton.suite()
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        HealthDiseaseNotificationTestCase))
 
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        NotificationStateChangeTestCase))
+    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+    #     HealthDiseaseNotificationTestCase))
+
+    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+    #     NotificationStateChangeTestCase))
     
-    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-        GnuHealthSequencesTestCase))
+    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+    #     GnuHealthSequencesTestCase))
 
     suite.addTests(doctest.DocFileSuite('test_models.rst',
                                         setUp=None, tearDown=None, 
