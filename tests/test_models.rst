@@ -1,21 +1,21 @@
-=======================
+=====================================
 
-Carrier Weight Scenario
+Health Disease Notification Scenario
 
-=======================
+=====================================
 
 
-=============
+=====================================
 
 General Setup
 
-=============
+=====================================
 
 
 Imports::
 
 
-    >>> from datetime import datetime
+    >>> from datetime import datetime, timedelta
 
     >>> from dateutil.relativedelta import relativedelta
 
@@ -26,13 +26,19 @@ Imports::
     >>> from trytond.modules.health_disease_notification.tests.database_config import set_up_datebase
 
 
+
 Create database::
+
+
 
     >>> CONFIG = set_up_datebase(database_name='test_memory')
 
     >>> CONFIG.pool.test = True
 
+
+
 Install health_disease_notification, health_disease_notification_history::
+
 
 
     >>> Module = Model.get('ir.module.module')
@@ -47,7 +53,9 @@ Install health_disease_notification, health_disease_notification_history::
     >>> Wizard('ir.module.module.install_upgrade').execute('upgrade')
 
 
-Create Notification::
+
+Create Disease Notification::
+
 
 
     >>> Patient = Model.get('gnuhealth.patient')
@@ -55,6 +63,10 @@ Create Notification::
     >>> HealthProfessional = Model.get('gnuhealth.healthprofessional')
 
     >>> Notification = Model.get('gnuhealth.disease_notification')
+
+    >>> Institution = Model.get('gnuhealth.institution')
+
+    >>> institution, = Institution.find([('id', '=', '1')])
 
     >>> patient, = Patient.find([('id', '=', '1')])
 
@@ -64,7 +76,7 @@ Create Notification::
 
     >>> Notification.date_notified = datetime.now()
 
-    >>> Notification.name = 'Code'
+    >>> Notification.name = ' '.join(['Code', str(datetime.now())])
 
     >>> Notification.patient = patient
 
@@ -72,8 +84,11 @@ Create Notification::
 
     >>> Notification.healthprof = healthprof
 
+    >>> Notification.save()
+
 
 Reload the context::
+
 
 
     >>> User = Model.get('res.user')
@@ -81,529 +96,274 @@ Reload the context::
     >>> CONFIG._context = User.get_preferences(True, CONFIG.context)
 
 
-Create fiscal year::
 
+Create Risk Factor Condition::
 
-    >>> FiscalYear = Model.get('account.fiscalyear')
 
-    >>> Sequence = Model.get('ir.sequence')
 
-    >>> SequenceStrict = Model.get('ir.sequence.strict')
+    >>> RiskFactor = Model.get('gnuhealth.disease_notification.risk_disease')
 
-    >>> fiscalyear = FiscalYear(name='%s' % today.year)
+    >>> risk_factor_0 = RiskFactor()
 
-    >>> fiscalyear.start_date = today + relativedelta(month=1, day=1)
+    >>> risk_factor_1 = RiskFactor()
 
-    >>> fiscalyear.end_date = today + relativedelta(month=12, day=31)
+    >>> risk_factor_2 = RiskFactor()
 
-    >>> fiscalyear.company = company
+    >>> risk_factor_3 = RiskFactor()
 
-    >>> post_move_sequence = Sequence(name='%s' % today.year,
+    >>> Pathology = Model.get('gnuhealth.pathology')
 
-    ...     code='account.move',
+    >>> pathology = Pathology.find([('id', 'in', ['1', '2', '3', '4'])])
 
-    ...     company=company)
+    >>> risk_factor_0.pathology = pathology[0]
 
-    >>> post_move_sequence.save()
+    >>> risk_factor_0.notification = Notification
 
-    >>> fiscalyear.post_move_sequence = post_move_sequence
+    >>> risk_factor_0.comment = 'Just a few lines of comments'
 
-    >>> invoice_sequence = SequenceStrict(name='%s' % today.year,
+    >>> risk_factor_0.save()
 
-    ...     code='account.invoice',
+    >>> risk_factor_1.pathology = pathology[1]
 
-    ...     company=company)
+    >>> risk_factor_1.notification = Notification
 
-    >>> invoice_sequence.save()
+    >>> risk_factor_1.comment = 'Just a few lines of comments'
 
-    >>> fiscalyear.out_invoice_sequence = invoice_sequence
+    >>> risk_factor_1.save()
 
-    >>> fiscalyear.in_invoice_sequence = invoice_sequence
+    >>> risk_factor_2.pathology = pathology[2]
 
-    >>> fiscalyear.out_credit_note_sequence = invoice_sequence
+    >>> risk_factor_2.notification = Notification
 
-    >>> fiscalyear.in_credit_note_sequence = invoice_sequence
+    >>> risk_factor_2.comment = 'Just a few lines of comments'
 
-    >>> fiscalyear.save()
+    >>> risk_factor_2.save()
 
-    >>> FiscalYear.create_period([fiscalyear.id], config.context)
+    >>> risk_factor_3.pathology = pathology[3]
 
+    >>> risk_factor_3.notification = Notification
 
-Create chart of accounts::
+    >>> risk_factor_3.comment = 'Just a few lines of comments'
 
+    >>> risk_factor_3.save()
 
-    >>> AccountTemplate = Model.get('account.account.template')
 
-    >>> Account = Model.get('account.account')
 
-    >>> AccountJournal = Model.get('account.journal')
+Put Risk Factor Condition in Disease Notification::
 
-    >>> account_template, = AccountTemplate.find([('parent', '=', None)])
 
-    >>> create_chart = Wizard('account.create_chart')
+    >>> Notification.risk_factor = [risk_factor_0, risk_factor_1, 
+    ...                             risk_factor_2, risk_factor_3]
 
-    >>> create_chart.execute('account')
+    >>> Notification.save()
 
-    >>> create_chart.form.account_template = account_template
+Create Lab Results Types::
 
-    >>> create_chart.form.company = company
 
-    >>> create_chart.execute('create_account')
 
-    >>> receivable, = Account.find([
+    >>> LabResults = Model.get('gnuhealth.disease_notification.labresulttype')
 
-    ...         ('kind', '=', 'receivable'),
+    >>> lab_result = LabResults()
 
-    ...         ('company', '=', company.id),
+    >>> lab_result.name = 'Result -'.join(['Code', str(datetime.now())])
 
-    ...         ])
+    >>> Code = 'R-' + str(datetime.now())
 
-    >>> payable, = Account.find([
+    >>> if len(Code) > 20:
+    ...     Code = ''.join([Code[0:20]])
 
-    ...         ('kind', '=', 'payable'),
+    >>> lab_result.code = Code
 
-    ...         ('company', '=', company.id),
+    >>> lab_result.save()
 
-    ...         ])
+Create Notified Specimen::
 
-    >>> revenue, = Account.find([
 
-    ...         ('kind', '=', 'revenue'),
 
-    ...         ('company', '=', company.id),
+    >>> NotifiedSpecimen = Model.get('gnuhealth.disease_notification.specimen')
 
-    ...         ])
+    >>> Code = ''.join([Code[0:5], str(datetime.now())[18:]])
 
-    >>> create_chart.form.account_receivable = receivable
+    >>> specimen_0 = NotifiedSpecimen()
 
-    >>> create_chart.form.account_payable = payable
+    >>> specimen_0.notification = Notification
 
-    >>> create_chart.execute('create_properties')
+    >>> specimen_0.name = Code + '0'
 
+    >>> specimen_0.specimen_type = 'urine'
 
-Create supplier::
+    >>> specimen_0.date_taken = datetime.now()
 
+    >>> specimen_0.lab_sent_to = 'Generation A Lab'
 
-    >>> Party = Model.get('party.party')
+    >>> specimen_0.lab_test_type = 'microscopy'
 
-    >>> supplier = Party(name='Supplier')
+    >>> specimen_0.date_tested = datetime.now()
 
-    >>> supplier.save()
+    >>> specimen_0.save()
 
+    >>> specimen_1 = NotifiedSpecimen()
 
-Create customer::
+    >>> specimen_1.notification = Notification
 
+    >>> specimen_1.name = Code + '1'
 
-    >>> Party = Model.get('party.party')
+    >>> specimen_1.specimen_type = 'blood'
 
-    >>> customer = Party(name='Customer')
+    >>> specimen_1.date_taken = datetime.now()
 
-    >>> customer.save()
+    >>> specimen_1.lab_sent_to = 'Generation A Lab'
 
+    >>> specimen_1.lab_test_type = 'microscopy'
 
-Create category::
+    >>> specimen_1.date_tested = datetime.now()
 
+    >>> specimen_1.save()
 
-    >>> ProductCategory = Model.get('product.category')
+    >>> specimen_2 = NotifiedSpecimen()
 
-    >>> category = ProductCategory(name='Category')
+    >>> specimen_2.notification = Notification
 
-    >>> category.save()
+    >>> specimen_2.name = Code + '2'
 
+    >>> specimen_2.specimen_type = 'stool'
 
-Create product::
+    >>> specimen_2.date_taken = datetime.now()
 
+    >>> specimen_2.lab_sent_to = 'Generation A Lab'
 
-    >>> ProductUom = Model.get('product.uom')
+    >>> specimen_2.lab_test_type = 'other'
 
-    >>> ProductTemplate = Model.get('product.template')
+    >>> specimen_2.date_tested = datetime.now()
 
-    >>> Product = Model.get('product.product')
+    >>> specimen_2.save()
 
-    >>> unit, = ProductUom.find([('name', '=', 'Unit')])
+    >>> specimen_3 = NotifiedSpecimen()
 
-    >>> gram, = ProductUom.find([('name', '=', 'Gram')])
+    >>> specimen_3.notification = Notification
 
-    >>> product = Product()
+    >>> specimen_3.name = Code + '3'
 
-    >>> template = ProductTemplate()
+    >>> specimen_3.specimen_type = 'eye swab'
 
-    >>> template.name = 'Product'
+    >>> specimen_3.date_taken = datetime.now()
 
-    >>> template.category = category
+    >>> specimen_3.lab_sent_to = 'Generation A Lab'
 
-    >>> template.default_uom = unit
+    >>> specimen_3.lab_test_type = 'cs'
 
-    >>> template.type = 'goods'
+    >>> specimen_3.date_tested = datetime.now()
 
-    >>> template.salable = True
+    >>> specimen_3.save()
 
-    >>> template.list_price = Decimal('20')
 
-    >>> template.cost_price = Decimal('8')
 
-    >>> template.account_revenue = revenue
+Put Lab Results in Disease Notification::
 
-    >>> template.weight = 250
 
-    >>> template.weight_uom = gram
+    >>> Notification.specimen_taken = False
 
-    >>> template.save()
+    >>> #print dir(Notification.specimens)
 
-    >>> product.template = template
+    >>> Notification.specimens.domain = [('gnuhealth.disease_notification.specimen', '=', specimen_0.id, 'gnuhealth.disease_notification')]
+    >>> #...  specimen_1.id, specimen_2.id, specimen_3.id])])
 
-    >>> product.save()
+    >>> Notification.save()
 
-    >>> carrier_product = Product()
 
-    >>> carrier_template = ProductTemplate()
 
-    >>> carrier_template.name = 'Carrier Product'
+Creating Notification Symptom::
 
-    >>> carrier_template.category = category
 
-    >>> carrier_template.default_uom = unit
 
-    >>> carrier_template.type = 'service'
+    >>> Symptom = Model.get('gnuhealth.disease_notification.symptom')
 
-    >>> carrier_template.salable = True
+    >>> symptom = Symptom()
 
-    >>> carrier_template.list_price = Decimal('3')
+    >>> symptom.name = Notification
 
-    >>> carrier_template.cost_price = Decimal('3')
+    >>> symptom.pathology, = Pathology.find([('code', '=', 'R00')])
 
-    >>> carrier_template.account_revenue = revenue
+    >>> symptom.date_onset = datetime.now()
 
-    >>> carrier_template.save()
+    >>> symptom.comment = 'Just some comments'
 
-    >>> carrier_product.template = carrier_template
+    >>> symptom_1 = Symptom()
 
-    >>> carrier_product.save()
+    >>> symptom_1.name = Notification
 
+    >>> symptom_1.pathology, = Pathology.find([('code', '=', 'R00.2')])
 
-Create carrier::
+    >>> symptom_1.date_onset = datetime.now()
 
+    >>> symptom_1.comment = 'Just some comments'
 
-    >>> Carrier = Model.get('carrier')
-
-    >>> WeightPriceList = Model.get('carrier.weight_price_list')
-
-    >>> kilogram, = ProductUom.find([('name', '=', 'Kilogram')])
-
-    >>> carrier = Carrier()
-
-    >>> party = Party(name='Carrier')
-
-    >>> party.save()
-
-    >>> carrier.party = party
-
-    >>> carrier.carrier_product = carrier_product
-
-    >>> carrier.carrier_cost_method = 'weight'
-
-    >>> carrier.weight_currency = currency
-
-    >>> carrier.weight_uom = kilogram
-
-    >>> for weight, price in (
-
-    ...         (0.5, Decimal(25)),
-
-    ...         (1, Decimal(40)),
-
-    ...         (5, Decimal(180)),
-
-    ...         ):
-
-    ...     line = WeightPriceList(weight=weight, price=price)
-
-    ...     carrier.weight_price_list.append(line)
-
-    >>> carrier.save()
-
-
-Receive a single product line::
-
-
-    >>> ShipmentIn = Model.get('stock.shipment.in')
-
-    >>> Move = Model.get('stock.move')
-
-    >>> Location = Model.get('stock.location')
-
-    >>> supplier_location, = Location.find([
-
-    ...         ('code', '=', 'SUP'),
-
-    ...         ])
-
-    >>> shipment = ShipmentIn()
-
-    >>> shipment.supplier = supplier
-
-    >>> move = Move()
-
-    >>> shipment.incoming_moves.append(move)
-
-    >>> move.from_location = supplier_location
-
-    >>> move.to_location = shipment.warehouse.input_location
-
-    >>> move.product = product
-
-    >>> move.quantity = 4
-
-    >>> move.unit_price
-
-    Decimal('8')
-
-    >>> shipment.carrier = carrier
-
-    >>> shipment.cost
-
-    Decimal('25')
-
-    >>> shipment.cost_currency == currency
-
-    True
-
-    >>> shipment.save()
-
-    >>> ShipmentIn.receive([shipment.id], config.context)
-
-    >>> shipment.reload()
-
-    >>> shipment.state
-
-    u'received'
-
-    >>> move, = shipment.incoming_moves
-
-    >>> move.unit_price
-
-    Decimal('14.2500')
-
-
-Create payment term::
-
-
-    >>> PaymentTerm = Model.get('account.invoice.payment_term')
-
-    >>> PaymentTermLine = Model.get('account.invoice.payment_term.line')
-
-    >>> payment_term = PaymentTerm(name='Direct')
-
-    >>> payment_term_line = PaymentTermLine(type='remainder', days=0)
-
-    >>> payment_term.lines.append(payment_term_line)
-
-    >>> payment_term.save()
-
-
-Sale products with cost on shipment::
-
-
-    >>> Sale = Model.get('sale.sale')
-
-    >>> SaleLine = Model.get('sale.line')
-
-    >>> sale = Sale()
-
-    >>> sale.party = customer
-
-    >>> sale.carrier = carrier
-
-    >>> sale.payment_term = payment_term
-
-    >>> sale.invoice_method = 'shipment'
-
-    >>> sale.shipment_cost_method = 'shipment'
-
-    >>> sale_line = SaleLine()
-
-    >>> sale.lines.append(sale_line)
-
-    >>> sale_line.product = product
-
-    >>> sale_line.quantity = 5.0
-
-    >>> cost_line = sale.lines[-1]
-
-    >>> cost_line.product == carrier_product
-
-    True
-
-    >>> cost_line.quantity == 1
-
-    True
-
-    >>> cost_line.amount
-
-    Decimal('40.00')
-
-    >>> sale.save()
-
-    >>> Sale.quote([sale.id], config.context)
-
-    >>> Sale.confirm([sale.id], config.context)
-
-    >>> Sale.process([sale.id], config.context)
-
-    >>> sale.state
-
-    u'processing'
-
-    >>> sale.untaxed_amount
-
-    Decimal('140.00')
-
-
-Send products::
-
-
-    >>> ShipmentOut = Model.get('stock.shipment.out')
-
-    >>> shipment, = sale.shipments
-
-    >>> shipment.carrier == carrier
-
-    True
-
-    >>> shipment.cost
-
-    Decimal('40')
-
-    >>> shipment.cost_currency == currency
-
-    True
-
-    >>> move, = shipment.inventory_moves
-
-    >>> move.quantity = 4
-
-    >>> shipment.cost
-
-    Decimal('25')
-
-    >>> shipment.cost_currency == currency
-
-    True
-
-    >>> shipment.state
-
-    u'waiting'
-
-    >>> shipment.save()
-
-    >>> shipment.reload()
-
-    >>> ShipmentOut.assign_force([shipment.id], config.context)
-
-    >>> shipment.state
-
-    u'assigned'
-
-    >>> shipment.reload()
-
-    >>> ShipmentOut.pack([shipment.id], config.context)
-
-    >>> shipment.state
-
-    u'packed'
-
-    >>> shipment.reload()
-
-    >>> ShipmentOut.done([shipment.id], config.context)
-
-    >>> shipment.state
-
-    u'done'
-
-
-Check customer invoice::
-
-
-    >>> sale.reload()
-
-    >>> invoice, = sale.invoices
-
-    >>> invoice.untaxed_amount
-
-    Decimal('105.00')
-
-
-Sale products with cost on order::
-
-
-    >>> sale = Sale()
-
-    >>> sale.party = customer
-
-    >>> sale.carrier = carrier
-
-    >>> sale.payment_term = payment_term
-
-    >>> sale.invoice_method = 'order'
-
-    >>> sale.shipment_cost_method = 'order'
-
-    >>> sale_line = SaleLine()
-
-    >>> sale.lines.append(sale_line)
-
-    >>> sale_line.product = product
-
-    >>> sale_line.quantity = 3.0
-
-    >>> cost_line = sale.lines[-1]
-
-    >>> cost_line.product == carrier_product
-
-    True
-
-    >>> cost_line.quantity == 1
-
-    True
-
-    >>> cost_line.amount
-
-    Decimal('25.00')
-
-    >>> sale.save()
-
-    >>> Sale.quote([sale.id], config.context)
-
-    >>> Sale.confirm([sale.id], config.context)
-
-    >>> Sale.process([sale.id], config.context)
-
-    >>> sale.state
-
-    u'processing'
-
-    >>> sale.untaxed_amount
-
-    Decimal('85.00')
-
-
-Check customer shipment::
-
-
-    >>> shipment, = sale.shipments
-
-    >>> shipment.carrier == carrier
-
+    >>> Notification.symptoms == list([])
     True
 
 
-Check customer invoice::
+Make Symptom a part of Notification::
 
 
-    >>> sale.reload()
 
-    >>> invoice, = sale.invoices
+    >>> Notification.symptoms.extend([symptom, symptom_1])
 
-    >>> invoice.untaxed_amount
 
-    Decimal('85.00')
+
+Create Travel History::
+
+
+    >>> TravelsHistory = Model.get('gnuhealth.disease_notification.travel')
+
+    >>> travel = TravelsHistory()
+
+    >>> travel.notification = Notification
+
+    >>> Country = Model.get('country.country')
+
+    >>> travel.country, = Country.find([('code', '=', 'DK')])
+
+    >>> Subdiv = Model.get('country.subdivision')
+
+    >>> travel.subdiv, = Subdiv.find([('code', '=', 'DK-81')])
+
+    >>> travel.departure_date = datetime.now() - timedelta(days=-30)
+
+    >>> travel.arrival_date = datetime.now() - timedelta(days=-40)
+
+    >>> travel.comment = 'Spent quite a bit of time near epidemic'
+
+    >>> travel_1 = TravelsHistory()
+
+    >>> travel_1.notification = Notification
+
+    >>> Country = Model.get('country.country')
+
+    >>> travel_1.country, = Country.find([('code', '=', 'DK')])
+
+    >>> Subdiv = Model.get('country.subdivision')
+
+    >>> travel_1.subdiv, = Subdiv.find([('code', '=', 'DK-81')])
+
+    >>> travel_1.departure_date = datetime.now() - timedelta(days=-40)
+
+    >>> travel_1.arrival_date = datetime.now() - timedelta(days=-60)
+
+    >>> travel_1.comment = 'Spent quite a bit of time near epidemic'
+
+
+Notification Travel History::
+
+    >>> Notification.hx_travel = True
+
+    >>> Notification.hx_locations.extend([travel, travel_1])
+
+Create Appointment::
+
+    >>> Appointment = Model.get('gnuhealth.appointment')
+
+    >>> appointment = Appointment()
+
+    >>> appointment.patient = patient
+
+    >>>
