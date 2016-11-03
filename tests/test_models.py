@@ -5,8 +5,8 @@ import os
 import sys
 import doctest
 import unittest
-from datetime import (datetime, timedelta)
 import coverage
+from datetime import (datetime, timedelta)
 from trytond.tests.test_tryton import (test_view, test_depends, install_module,
                                        POOL, DB_NAME, USER,
                                        CONTEXT)
@@ -762,14 +762,14 @@ def suite():
 
     suite = trytond.tests.test_tryton.suite()
 
-    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-    #     HealthDiseaseNotificationTestCase))
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+        HealthDiseaseNotificationTestCase))
 
-    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-    #     NotificationStateChangeTestCase))
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+        NotificationStateChangeTestCase))
     
-    # suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
-    #     GnuHealthSequencesTestCase))
+    suite.addTests(unittest.TestLoader().loadTestsFromTestCase(
+        GnuHealthSequencesTestCase))
 
     suite.addTests(doctest.DocFileSuite('test_models.rst',
                                         setUp=None, tearDown=None, 
