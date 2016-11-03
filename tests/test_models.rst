@@ -14,6 +14,7 @@ General Setup
 
 Imports::
 
+    >>> from random import randrange
 
     >>> from datetime import datetime, timedelta
 
@@ -31,7 +32,7 @@ Create database::
 
 
 
-    >>> CONFIG = set_up_datebase(database_name='test_memory')
+    >>> CONFIG = set_up_datebase()
 
     >>> CONFIG.pool.test = True
 
@@ -157,6 +158,8 @@ Put Risk Factor Condition in Disease Notification::
 
     >>> Notification.save()
 
+
+
 Create Lab Results Types::
 
 
@@ -175,6 +178,8 @@ Create Lab Results Types::
     >>> lab_result.code = Code
 
     >>> lab_result.save()
+
+
 
 Create Notified Specimen::
 
@@ -261,12 +266,11 @@ Create Notified Specimen::
 Put Lab Results in Disease Notification::
 
 
-    >>> Notification.specimen_taken = False
 
-    >>> #print dir(Notification.specimens)
+    >>> Notification.specimen_taken = True
 
-    >>> Notification.specimens.domain = [('gnuhealth.disease_notification.specimen', '=', specimen_0.id, 'gnuhealth.disease_notification')]
-    >>> #...  specimen_1.id, specimen_2.id, specimen_3.id])])
+    >>> len(Notification.specimens) == 4
+    True
 
     >>> Notification.save()
 
@@ -288,6 +292,8 @@ Creating Notification Symptom::
 
     >>> symptom.comment = 'Just some comments'
 
+    >>> symptom.save()
+
     >>> symptom_1 = Symptom()
 
     >>> symptom_1.name = Notification
@@ -298,19 +304,26 @@ Creating Notification Symptom::
 
     >>> symptom_1.comment = 'Just some comments'
 
-    >>> Notification.symptoms == list([])
+    >>> symptom_1.save()
+
+    >>> len(Notification.symptoms) == 2
     True
+
 
 
 Make Symptom a part of Notification::
 
 
 
-    >>> Notification.symptoms.extend([symptom, symptom_1])
+    >>> Notification.save()
+
+    >>> len(Notification.symptoms) == 2
+    True
 
 
 
 Create Travel History::
+
 
 
     >>> TravelsHistory = Model.get('gnuhealth.disease_notification.travel')
@@ -333,6 +346,8 @@ Create Travel History::
 
     >>> travel.comment = 'Spent quite a bit of time near epidemic'
 
+    >>> travel.save()
+
     >>> travel_1 = TravelsHistory()
 
     >>> travel_1.notification = Notification
@@ -351,14 +366,29 @@ Create Travel History::
 
     >>> travel_1.comment = 'Spent quite a bit of time near epidemic'
 
+    >>> travel_1.save()
+
+    >>> len(Notification.hx_locations) == 2
+    True
+
+
 
 Notification Travel History::
 
+
+
     >>> Notification.hx_travel = True
 
-    >>> Notification.hx_locations.extend([travel, travel_1])
+    >>> Notification.save()
+
+    >>> len(Notification.hx_locations) == 2
+    True
+
+
 
 Create Appointment::
+
+
 
     >>> Appointment = Model.get('gnuhealth.appointment')
 
@@ -366,4 +396,102 @@ Create Appointment::
 
     >>> appointment.patient = patient
 
-    >>>
+    >>> appointment.type = 'ambulatory'
+
+    >>> Specialty = Model.get('gnuhealth.specialty')
+
+    >>> specialty, = Specialty.find([('code', '=', 'BIOCHEM')])
+
+    >>> appointment.speciality = specialty
+
+    >>> appointment.save()
+
+
+
+Create Encounter::
+
+
+
+    >>> appointment.state
+    u'confirmed'
+
+    >>> appointment.click('client_arrived')
+
+    >>> appointment.state
+    u'arrived'
+
+    >>> encounter_num = appointment.click('start_encounter')
+
+    >>> Encounter = Model.get('gnuhealth.encounter')
+
+    >>> encounter = Encounter()
+
+    >>> encounter.appointment = appointment
+
+    >>> encounter.patient = appointment.patient
+
+    >>> encounter.start_time = datetime.now()
+
+    >>> encounter.save()
+
+    >>> Encounter_Component = Model.get('gnuhealth.encounter.component')
+
+    >>> Encounter_Ambulatory = Model.get('gnuhealth.encounter.ambulatory')
+
+    >>> #dir(Encounter_Component)
+
+    >>> component = Encounter_Ambulatory()
+
+    >>> component.systolic = 180
+
+    >>> component.diastolic = 88
+
+    >>> component.encounter = encounter
+
+    >>> component.save()
+
+    >>> component.sign_time = datetime.now()
+
+    >>> encounter.save()
+
+    >>> #component.click('sign_x')
+
+    >>> #encounter.click('sign_finish')
+
+    >>> #Notification.encounter = encounter
+
+    >>> Notification.save()
+
+    >>> appointment.save()
+
+    >>> len(appointment.state_changes) == 2
+    True
+
+    >>> appointment.state_changes[0].target_state
+    u'processing'
+
+
+
+Test Depends::
+
+
+
+    >>> Notification.reporting_facility_other
+
+    >>> Notification.reporting_facility = institution
+
+    >>> Notification.reporting_facility_other
+    ''
+
+    >>> Notification.diagnosis_confirmed = risk_factor_0
+
+    >>> Notification.status
+    u'waiting'
+
+    >>> Notification.status = 'confirmed'
+
+    >>> Notification.save()
+
+    >>> Notification.status
+    u'confirmed'
+
