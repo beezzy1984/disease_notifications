@@ -776,6 +776,36 @@ def suite():
                                         encoding='utf-8', 
                                         optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
                                         checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_status_display.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_epi_week_onset.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_comments_short.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_age.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_sex.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
+    suite.addTests(doctest.DocFileSuite('test_disease_notification_puid.rst',
+                                        setUp=None, tearDown=None, 
+                                        encoding='utf-8', 
+                                        optionflags=doctest.REPORT_ONLY_FIRST_FAILURE,
+                                        checker=None))
     return suite
 
 if __name__ == '__main__':

@@ -40,23 +40,6 @@ Create database::
 
 
 
-Install health_disease_notification, health_disease_notification_history::
-
-
-
-    >>> Module = Model.get('ir.module.module')
-
-    >>> modules = Module.find([('name', 'in', [
-    ...                         'health_disease_notification', 
-    ...                         'health_disease_notification_history'
-    ...                       ]),])
-
-    >>> Module.install([x.id for x in modules], CONFIG.context)
-
-    >>> Wizard('ir.module.module.install_upgrade').execute('upgrade')
-
-
-
 Create Disease Notification::
 
 
@@ -179,7 +162,7 @@ Create Lab Results Types::
 
     >>> lab_result.code = Code
 
-    >>> lab_result.save()
+    >>> #lab_result.save()
 
 
 
@@ -598,13 +581,6 @@ Test Depends::
 
     >>> Notification.diagnosis_confirmed = risk_factor_0
 
-    >>> Notification.status
-    u'waiting'
-
-    >>> Notification.status = 'confirmed'
-
-    >>> Notification.save()
-
-    >>> Notification.status
-    u'confirmed'
+    >>> Notification.epi_week_onset == None
+    False
 
